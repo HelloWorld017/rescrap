@@ -1,0 +1,22 @@
+{
+  "name": "recrond",
+  "version": "1.0.0",
+  "description": "A toolset for writing crawlers",
+  "main": "dist/recrond.bundle.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HelloWorld017/recrond.git"
+  },
+  "keywords": [
+    "crawler"
+  ],
+  "author": "Khinenw",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HelloWorld017/recrond/issues"
+  },
+  "homepage": "https://github.com/HelloWorld017/recrond#readme"
+}
