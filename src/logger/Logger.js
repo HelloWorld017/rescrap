@@ -71,7 +71,7 @@ export class Logger {
 	buildContentString(args) {
 		return args.map(v => {
 			return (typeof v === 'object' && v !== null)
-				? util.inspect(v)
+				? `\n${util.inspect(v, { depth: Infinity, colors: true })}`
 				: v
 		}).join(' ');
 	}

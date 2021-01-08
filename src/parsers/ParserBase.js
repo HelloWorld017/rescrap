@@ -1,61 +1,141 @@
-import { named } from "../../utils";
+import ModelUnit from "../models/ModelUnit";
+import config from "../config";
+import logger as globalLogger from "../logger";
+import { named } from "../utils";
 
 export default class ParserBase extends named() {
 	constructor() {
+		super();
+
+		this.logger = globalLogger.scope(this.name);
 		this.implemented = [];
+		this.options = {};
 	}
 
-	async doInit(options) {}
+	async _init(options) {
+		this.options = options;
+	}
 
-	async doExpandUnit(unit, nextKeys) {
-		// Upsert where parentId: unit.id, key: nextKeys
+	async _listUnit(data) {
 		return [];
 	}
 
-	async doListFile(unit) {
+	async _listFile(unit) {
 		return [];
 	}
 
-	async *doListFileGenerative(unit) {
+	async *_listFileIterator(unit) {
 		const files = await this.listFile(unit);
 
 		for (let i = 0; i < files.length; i++) {
-			const result = yield files[i];
+			const result = yield { file: files[i] };
 
 			if (result.isRetry)
 				i--;
 		}
 	}
 
-	async doDownload(unit, fetcher) {
-		const generator = await this.listFileGenerative(unit);
+	async _download(unit, parentFetcher) {
+		const iterator = await this.listFileIterator(unit);
+		const fetcher = await this._getFetcherForTerminalUnit(unit, parentFetcher);
+
+		let retryCount = 0;
+		let isRetry = false;
+		let previousFetch = null;
+
+		while (true) {
+			const { value: yieldObject } = await iterator.next({ isRetry, previousFetch });
+			if (yieldObject === undefined) {
+				break;
+			}
+
+			const { file, ignoreError } = yieldObject;
+
+			try {
+				previousFetch = await fetcher.download(file);
+				await this.postProcess(file);
+
+				retryCount = 0;
+				isRetry = false;
+			} catch(err) {
+				previousFetch = err;
+				previousFetch.error = err;
+
+				if (config.debug.debugMode)
+					this.logger.debug('Error while downloading file', err);
+
+				if (isRetry && !ignoreError)
+					retryCount++;
+
+				if (retryCount > 5) {
+					iterator.return();
+					throw err;
+				}
+
+				isRetry = true;
+			}
+		}
+
+		try {
+			await fetcher.commit();
+		} catch(err) {
+			this.logger.error("Failed to commit staging folders!", err);
+			throw err;
+		}
+
+		const terminal = await unit.getTerminal();
+		terminal.downloaded = true;
+
+		await terminal.save();
 	}
 
-	async doPostProcess(file) {
+	async _postProcess(file) {
 
 	}
 
-	async init(options) {
-		return PluginManager.onInit(this, options, () => {
-			return await this.doInit(options);
+	async _getFetcherForTerminalUnit(unit, parentFetcher) {
+		return parentFetcher.scopeStage(unit, this.options.fetch ?? {});
+	}
+
+	async getRootUnit() {
+		const [ unit ] = await ModelUnit.findOne({
+			where: { id: this.name }
 		});
+
+		return unit;
 	}
 
-	async download(unit) {
-		return PluginManager.onDownload(this, unit, () => {
-			return await this.doDownload(unit);
-		});
+	init(...args) {
+		return PluginManager
+			.execute(this, 'parser/init', args, this._init.bind(this));
 	}
 
-	async listFile(unit) {
-		return PluginManager.onListFile(this, unit, () => {
-			return await this.doListFile(unit);
-		});
+	listUnit(...args) {
+		return PluginManager
+			.execute(this, 'parser/listUnit', args, this._listUnit.bind(this));
 	}
 
-	async postProcess(file) {
-		return PluginManager.onPostProcess(this, file, () => {
-			return await this.doPostProcess(file);
-		});
+	download(unit, globalFetcher) {
+		const terminal = await unit.getTerminal();
+		if (!terminal || terminal.downloaded) return;
+
+		const ancestors = await unit.getAncestors();
+		const fetcher = ancestors.reduce(
+			(fetcher, ancestor) => fetcher.scopeDirect(ancestor),
+			globalFetcher
+		);
+
+		return PluginManager
+			.execute(this, 'parser/download', [ unit, globalFetcher ], this._download.bind(this));
+	}
+
+	listFileIterator(...args) {
+		return PluginManager
+			.execute(this, 'parser/listFileIterator', args, this._listFileIterator.bind(this));
+	}
+
+	postProcess(...args) {
+		return PluginManager
+			.execute(this, 'parser/postProcess', args, this._postProcess.bind(this));
 	}
 }

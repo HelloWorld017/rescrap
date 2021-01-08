@@ -11,7 +11,7 @@ ModelTerminal.init({
 	downloaded: {
 		type: DataTypes.BOOLEAN
 	}
-});
+}, { sequelize, modelName: 'Terminal' });
 
 ModelUnit.hasOne(ModelTerminal);
 ModelTerminal.belongsTo(ModelUnit);

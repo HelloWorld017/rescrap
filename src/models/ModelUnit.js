@@ -42,6 +42,7 @@ ModelUnit.init(
 				where: { hierarchy_level: { $gt: 1 } }
 			}
 		],
+		modelName: 'Unit',
 		sequelize
 	}
 );

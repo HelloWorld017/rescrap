@@ -21,7 +21,7 @@ ModelFile.init({
 	info: {
 		type: DataTypes.JSON
 	}
-}, { sequelize });
+}, { sequelize, modelName: 'File' });
 ModelTerminal.hasMany(ModelFile);
 ModelFile.belongsTo(ModelTerminal);
 

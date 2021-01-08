@@ -15,13 +15,14 @@ export default class Trait extends named(Mixin) {
 		};
 
 		methods.forEach(method => {
-			const doMethod = `do${method.slice(0, 1).toUpperCase() + method.slice(1)}`;
+			const implMethod = `_${method}`;
 
 			TraitClass.prototype[ method ] = function (...args) {
-				return this[ doMethod ](...args);
+				return PluginManager
+					.execute(this, `parser/${method}`, args, this[implMethod].bind(this));
 			};
 
-			TraitClass.prototype[ doMethod ] = function() {};
+			TraitClass.prototype[ implMethod ] = function() {};
 		});
 
 		return TraitClass;
