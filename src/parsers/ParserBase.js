@@ -1,11 +1,11 @@
 import ModelUnit from "../models/ModelUnit";
-import config from "../config";
 import { named } from "../utils";
 
 export default class ParserBase extends named() {
-	constructor(fetcher, logger) {
+	constructor(recrond, fetcher, logger) {
 		super();
 
+		this.recrond = recrond;
 		this.fetcher = fetcher;
 		this.logger = logger;
 		this.implemented = [];
@@ -61,7 +61,7 @@ export default class ParserBase extends named() {
 				previousFetch = err;
 				previousFetch.error = err;
 
-				if (config.debug.debugMode)
+				if (this.recrond.config.debug.debugMode)
 					this.logger.debug('Error while downloading file', err);
 
 				if (isRetry && !ignoreError)

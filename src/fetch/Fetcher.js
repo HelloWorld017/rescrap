@@ -1,20 +1,18 @@
 import axios from "axios";
 import { axiosRetry, isRetryableError } from "axios-retry";
-import config from "../config";
-import logger as globalLogger from "../logger";
 import { merge } from "../utils";
 
 class Fetcher {
-	constructor(
-		options = { ...config.fetch },
-		logger = globalLogger
-	) {
+	constructor(recrond, options, logger) {
+		this.recrond = recrond;
+		this.options = options || { ...recrond.config.fetch };
+
+		this.globalLogger = logger || recrond.logger;
+		this.logger = this.globalLogger.scope('fetcher');
+
 		this.downloadPath = options.download.path;
 		this.stageTargetPath = null;
 
-		this.globalLogger = logger;
-		this.logger = this.globalLogger.scope('fetcher');
-		this.options = options;
 		this.unit = null;
 
 		this.axios = axios.create({
@@ -51,7 +49,7 @@ class Fetcher {
 					return reject(err);
 				}
 
-				if(config.debug.dumpRequest)
+				if(this.recrond.config.debug.dumpRequest)
 					fs.writeFileSync(`./dumps/${Date.now()}.txt`, util.inspect(resp));
 
 				resolve(getResponse ? resp : body);

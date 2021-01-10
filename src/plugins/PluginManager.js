@@ -1,4 +1,4 @@
-class PluginManager {
+export default class PluginManager {
 	constructor() {
 		this.plugins = new Map();
 		this.events = new Map();
@@ -26,5 +26,3 @@ class PluginManager {
 		return next(0)(args);
 	}
 }
-
-export default new PluginManager;

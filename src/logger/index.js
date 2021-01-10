@@ -44,5 +44,4 @@ export class RecrondLogger extends Logger {
 	}
 }
 
-export const manager = new RecrondLogger();
-export default manager.createLogger();
+export default RecrondLogger;

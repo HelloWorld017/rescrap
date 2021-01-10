@@ -2,10 +2,12 @@ import { getRecrondDir } from "../utils";
 import logger as globalLogger from "../logger";
 import globby from "globby";
 import path from "path";
-import * as recrond from "../";
 
-class ParserManager {
-	constructor() {
+export default class ParserManager {
+	constructor(recrond) {
+		this.config = recrond.config;
+		this.logger = recrond.logger;
+		this.recrond = recrond;
 		this.parsers = new Map();
 	}
 
@@ -23,16 +25,18 @@ class ParserManager {
 	}
 
 	async loadParser(parserPath) {
-		path.join(getRecrondDir(), parserPath)
-
 		try {
-			const ParserClass = evaluate(parserPath, { recrond });
+			const ParserClass = evaluate(
+				path.resolve(this.recrond.getDirectory(), parserPath),
+				{ recrond: this.recrond }
+			);
 
 			const parserName = ParserClass.getName();
-			const parserOption = config.parsers[parserName];
+			const parserOption = this.config.parsers[parserName];
 
 			const logger = globalLogger.scope(parserName);
 			const fetcher = new Fetcher(
+				this.recrond,
 				parserOption.fetch,
 				logger
 			);
@@ -48,5 +52,3 @@ class ParserManager {
 		}
 	}
 }
-
-export default new ParserManager;
