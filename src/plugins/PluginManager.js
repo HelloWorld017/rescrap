@@ -1,11 +1,18 @@
 export default class PluginManager {
-	constructor() {
+	constructor(recrond) {
+		this.recrond = recrond;
+		this.logger = recrond.logger;
 		this.plugins = new Map();
 		this.events = new Map();
 	}
 
+	async initApplication() {
+		await this.loadPlugins();
+	}
+
 	registerPlugin(plugin) {
 		this.plugins.set(plugin.name, plugin);
+		this.logger.info(`Loaded plugin: ${plugin.name}`);
 	}
 
 	registerEvent(eventName, callback) {
@@ -17,12 +24,42 @@ export default class PluginManager {
 	}
 
 	async execute(parser, eventName, args, callback) {
-		const events = (this.events.get(eventName) ?? [])
+		const events = (this.events.get(eventName) || [])
 			.concat((...[, , args]) => callback(...args));
 
 		const next = i => args =>
 			Promise.resolve(events[i + 1](parser, eventName, args, next(i + 1)));
 
 		return next(0)(args);
+	}
+
+	async loadPlugins() {
+		const plugins = await globby([
+			"plugins/*.js",
+			"plugins/*/index.js"
+		], {
+			cwd: this.recrond.basePath
+		});
+
+		for (const pluginPath of plugins) {
+			await loadPlugin(path.join(this.recrond.basePath, pluginPath));
+		}
+	}
+
+	async loadPlugin(pluginPath) {
+		try {
+			const PluginClass = evaluate(pluginPath);
+
+			const pluginName = PluginClass.getName();
+			const logger = this.recrond.logger.scope(pluginName);
+
+			const plugin = new PluginClass(this.recrond, logger);
+			this.registerPlugin(plugin);
+
+			return true;
+		} catch(err) {
+			this.logger.error(`Failed to load plugin: ${pluginPath}`, err);
+			return false;
+		}
 	}
 }

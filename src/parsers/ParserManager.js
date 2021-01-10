@@ -1,4 +1,3 @@
-import { getRecrondDir } from "../utils";
 import logger as globalLogger from "../logger";
 import globby from "globby";
 import path from "path";
@@ -11,25 +10,26 @@ export default class ParserManager {
 		this.parsers = new Map();
 	}
 
-	async init() {
+	async initApplication() {
+		await this.loadParsers();
+	}
+
+	async loadParsers() {
 		const parsers = await globby([
 			"parsers/*.js",
-			"parsers/*/*.parser.js"
+			"parsers/*/index.js"
 		], {
-			cwd: getRecrondDir()
+			cwd: this.recrond.basePath
 		});
 
 		for (const parserPath of parsers) {
-			await loadParser(path.join(getRecrondDir(), parserPath));
+			await loadParser(path.join(this.recrond.basePath, parserPath));
 		}
 	}
 
 	async loadParser(parserPath) {
 		try {
-			const ParserClass = evaluate(
-				path.resolve(this.recrond.getDirectory(), parserPath),
-				{ recrond: this.recrond }
-			);
+			const ParserClass = evaluate(parserPath);
 
 			const parserName = ParserClass.getName();
 			const parserOption = this.config.parsers[parserName];
@@ -41,13 +41,13 @@ export default class ParserManager {
 				logger
 			);
 
-			const parser = new ParserClass(fetcher, logger);
+			const parser = new ParserClass(this.recrond, fetcher, logger);
 			this.parsers.set(parserName, parser);
 
-			logger.info(`Loaded parser: ${parserName}`);
+			this.logger.info(`Loaded parser: ${parserName}`);
 			return true;
 		} catch(err) {
-			logger.error(`Failed to load parser: ${parserPath}`, err);
+			this.logger.error(`Failed to load parser: ${parserPath}`, err);
 			return false;
 		}
 	}

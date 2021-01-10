@@ -1,6 +1,9 @@
 import axios from "axios";
 import { axiosRetry, isRetryableError } from "axios-retry";
+import fs from "fs";
 import { merge } from "../utils";
+import mergeConfig from "axios/lib/core/mergeConfig";
+import util from "util";
 
 class Fetcher {
 	constructor(recrond, options, logger) {
@@ -31,30 +34,23 @@ class Fetcher {
 		return await this.request({ uri }, req);
 	}
 
-	async request(...req) {
-		// TODO
-		return new Promise((resolve, reject) => {
-			request(this.mergeRequest(
-				Object.assign({ uri }, obj)
-			), (err, resp, body) => {
-				if(err) {
-					if(count < this.options.request.maxConnectRetry && err.message === 'read ECONNRESET') {
-						this.$(uri, obj, getResponse, count + 1)
-							.then(resolve)
-							.catch(reject);
+	async request(...reqs) {
+		const mergedConfig = req.reduce(
+			(base, config) => mergeConfig(base, config),
+			{}
+		);
 
-						return;
-					}
+		try {
+			const response = await this.axios(mergedConfig);
+			if(this.recrond.config.debug.dumpRequest) {
+				await fs.promises.mkdir('./dumps', { recursive: true });
+				await fs.promises.writeFile(`./dumps/${Date.now()}.txt`, util.inspect(resp));
+			}
 
-					return reject(err);
-				}
-
-				if(this.recrond.config.debug.dumpRequest)
-					fs.writeFileSync(`./dumps/${Date.now()}.txt`, util.inspect(resp));
-
-				resolve(getResponse ? resp : body);
-			});
-		});
+			return response;
+		} catch (err) {
+			throw err;
+		}
 	}
 
 	async ensureDest() {

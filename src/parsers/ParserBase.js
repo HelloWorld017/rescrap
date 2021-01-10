@@ -106,12 +106,12 @@ export default class ParserBase extends named() {
 	}
 
 	init(...args) {
-		return PluginManager
+		return this.recrond.pluginManager
 			.execute(this, 'parser/init', args, this._init.bind(this));
 	}
 
 	listUnit(...args) {
-		return PluginManager
+		return this.recrond.pluginManager
 			.execute(this, 'parser/listUnit', args, this._listUnit.bind(this));
 	}
 
@@ -125,17 +125,17 @@ export default class ParserBase extends named() {
 			globalFetcher
 		);
 
-		return PluginManager
+		return this.recrond.pluginManager
 			.execute(this, 'parser/download', [ unit, globalFetcher ], this._download.bind(this));
 	}
 
 	listFileIterator(...args) {
-		return PluginManager
+		return this.recrond.pluginManager
 			.execute(this, 'parser/listFileIterator', args, this._listFileIterator.bind(this));
 	}
 
 	postProcess(...args) {
-		return PluginManager
+		return this.recrond.pluginManager
 			.execute(this, 'parser/postProcess', args, this._postProcess.bind(this));
 	}
 }

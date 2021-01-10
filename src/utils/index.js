@@ -1,3 +1,4 @@
+import deepmerge from "deepmerge";
 import fs from "fs";
 import path from "path";
 import vm from "vm";
@@ -6,7 +7,7 @@ export * from "./db";
 export * from "./filesystem";
 export * from "./promise";
 
-export default function named(BaseClass = Object) {
+export function named(BaseClass = Object) {
 	return class Named extends BaseClass {
 		constructor(...args) {
 			super(...args);
@@ -19,7 +20,7 @@ export default function named(BaseClass = Object) {
 	};
 }
 
-export default function evaluate(filePath, context) {
+export async function evaluate(filePath, context) {
 	const fileName = path.basename(filePath);
 
 	const fileContent = await fs.promises.readFile(filePath, 'utf8');
@@ -36,4 +37,19 @@ export default function evaluate(filePath, context) {
 	});
 
 	return exportModule.exports;
+}
+
+export function merge(items, arrayMerge = false) {
+	deepmerge(items, {
+		arrayMerge: arrayMerge ?
+			(target, source, options) =>
+				source.reduce((dest, item) => {
+					if (!dest.includes(item))
+						dest.push(item);
+
+					return dest;
+				}, target.slice()) :
+
+			(target, source, options) => source
+	})
 }
