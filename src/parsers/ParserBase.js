@@ -1,13 +1,13 @@
 import ModelUnit from "../models/ModelUnit";
 import config from "../config";
-import logger as globalLogger from "../logger";
 import { named } from "../utils";
 
 export default class ParserBase extends named() {
-	constructor() {
+	constructor(fetcher, logger) {
 		super();
 
-		this.logger = globalLogger.scope(this.name);
+		this.fetcher = fetcher;
+		this.logger = logger;
 		this.implemented = [];
 		this.options = {};
 	}
@@ -35,9 +35,9 @@ export default class ParserBase extends named() {
 		}
 	}
 
-	async _download(unit, parentFetcher) {
+	async _download(unit) {
 		const iterator = await this.listFileIterator(unit);
-		const fetcher = await this._getFetcherForTerminalUnit(unit, parentFetcher);
+		const fetcher = await this._getFetcherForTerminalUnit(unit);
 
 		let retryCount = 0;
 		let isRetry = false;
@@ -93,8 +93,8 @@ export default class ParserBase extends named() {
 
 	}
 
-	async _getFetcherForTerminalUnit(unit, parentFetcher) {
-		return parentFetcher.scopeStage(unit, this.options.fetch ?? {});
+	async _getFetcherForTerminalUnit(unit) {
+		return this.fetcher.scopeStage(unit);
 	}
 
 	async getRootUnit() {

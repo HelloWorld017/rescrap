@@ -3,12 +3,6 @@ class Recrond {
 
 	}
 
-	initApplication() {
-		// Init configuration
-		// Init plugins
-		this.init();
-	}
-
 	executeCommand() {
 
 	}

@@ -1,14 +1,15 @@
+import axios from "axios";
+import { axiosRetry, isRetryableError } from "axios-retry";
 import config from "../config";
 import logger as globalLogger from "../logger";
-import utils from "../utils";
+import { merge } from "../utils";
 
 class Fetcher {
 	constructor(
-		downloadPath = getDownloadDir(),
 		options = { ...config.fetch },
 		logger = globalLogger
 	) {
-		this.downloadPath = downloadPath;
+		this.downloadPath = options.download.path;
 		this.stageTargetPath = null;
 
 		this.globalLogger = logger;
@@ -18,6 +19,13 @@ class Fetcher {
 
 		this.axios = axios.create({
 			timeout: this.options.timeout
+		});
+
+		axiosRetry(this.axios, {
+			retries: this.options.maxRetry,
+			shouldResetTimeout: true,
+			retryCondition: error => isRetryableError(error) || error.code === 'ECONNABORTED',
+			retryDelay: count => count * 1000
 		});
 	}
 
@@ -58,8 +66,13 @@ class Fetcher {
 
 	_scope(unit, newPath, options = {}) {
 		const newLogger = this.globalLogger.scope(unit.name);
-		const newOptions = { ...this.options, ...options };
-		const newFetcher = new Fetcher(newPath, newOptions, newLogger);
+		const newOptions = merge([
+			this.options,
+			options,
+			{ download: { path: newPath } }
+		]);
+
+		const newFetcher = new Fetcher(newOptions, newLogger);
 		newFetcher.unit = unit;
 
 		return newFetcher;
@@ -101,9 +114,9 @@ class Fetcher {
 		try {
 			response = await this.request(request);
 
-			const { data: respStream, retryCount } = response;
+			const { data: respStream, config: { retryCount } } = response;
 			destStream = respStream;
-			retry += retryCount;
+			retry += (retryCount || 0);
 
 			const promises = [];
 
