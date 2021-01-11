@@ -18,5 +18,8 @@
   "bugs": {
     "url": "https://github.com/HelloWorld017/recrond/issues"
   },
-  "homepage": "https://github.com/HelloWorld017/recrond#readme"
+  "homepage": "https://github.com/HelloWorld017/recrond#readme",
+  "dependencies": {
+    "chalk": "^4.1.0"
+  }
 }

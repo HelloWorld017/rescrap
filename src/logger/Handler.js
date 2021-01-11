@@ -1,4 +1,5 @@
-import chalk, { Chalk } from 'chalk';
+import chalk from "chalk";
+import stripAnsi from "strip-ansi";
 
 export class HandlerBase {
     constructor(logLevel) {
@@ -41,7 +42,7 @@ export class HandlerFile extends HandlerBase {
     }
 
     buildContentString(tag, content) {
-        return `[ ${tag.label} ] ${content}`;
+        return `[ ${tag.label} ] ${stripAnsi(content)}`;
     }
 
     write(log) {

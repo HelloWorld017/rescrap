@@ -141,7 +141,10 @@ class Fetcher {
 			await Promise.race(promises);
 			await file.save();
 
-			this.logger.verbose(`Downloaded ${this.unit.name} > ${file.id}`);
+			this.logger.verbose.with('i18n')(
+				'fetcher-download-complete',
+				{ unitName: this.unit.name, fileId: file.id }
+			);
 		} catch(err) {
 			if (destStream) {
 				try {
@@ -156,7 +159,11 @@ class Fetcher {
 				throw err;
 			}
 
-			this.logger.debug(`Error downloading ${this.unit.name} > ${file.id}`, err);
+			this.logger.debug.with('i18n')(
+				'fetcher-download-failed',
+				err,
+				{ unitName: this.unit.name, fileId: file.id }
+			);
 			await this.download(req, file, retry);
 		}
 

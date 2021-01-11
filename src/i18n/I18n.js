@@ -46,13 +46,44 @@ export default class I18n {
 
 	async loadI18n(i18nPath) {
 		const i18nContent = await fs.promises.readFile(i18nPath, 'utf8');
-		const i18nName = path.basename(i18nPath, '.yml');
 		const i18nValue = yaml.parse(i18nContent);
 
-		this.registerLocale(i18nName, i18nValue);
+		this.registerLocale(i18nValue.locale);
 	}
 
-	t(key, args) {
-		//TODO
+	createI18n() {
+		return {
+			t: (key, args = {}) => {
+				const translation = this.locales[this.locale][key] ??
+					this.locales[this.fallbackLocale][key] ??
+					key;
+
+				const interpolated = Object.keys(args).reduce((translation, key) => {
+					return translation
+						.split(`{${key}}`)
+						.join(args[key])
+				}, translation);
+
+				return interpolated;
+			}
+		};
+	}
+
+	createLoggerModifier() {
+		const i18n = this.createI18n();
+
+		return (translationKey, ...args) => {
+			if (typeof translationKey === 'string') {
+				if (args.length > 0) {
+					return [
+						i18n.t(translationKey, args[args.length - 1]),
+						...args.slice(0, -1)
+					];
+				}
+				return [ i18n.t(translationKey) ];
+			}
+
+			return [ translationKey, ...args ];
+		};
 	}
 }

@@ -51,7 +51,7 @@ export default class ConfigManager {
 			const configValue = yaml.parse(configContent);
 			this.overrideConfig(configValue);
 
-			this.logger.info(`Loaded config ${configName}.`)
+			this.logger.info.with('i18n')('config-load', { configName });
 		}
 	}
 

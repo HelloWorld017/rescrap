@@ -1,3 +1,5 @@
+import chalk from "chalk";
+import chalkTemplates from "chalk/templates";
 import util from 'util';
 
 export const LogLevel = {
@@ -13,6 +15,7 @@ export class Logger {
 	constructor(scope = []) {
 		this.tags = this.getStaticTags();
 		this.handlers = [];
+		this.modifiers = {};
 		this.scopeValues = scope;
 	}
 
@@ -68,12 +71,27 @@ export class Logger {
 		};
 	}
 
+	addModifier(modifierName, modifierFn) {
+		this.modifiers[modifierName] = modifierFn;
+	}
+
 	buildContentString(args) {
 		return args.map(v => {
 			return (typeof v === 'object' && v !== null)
 				? `\n${util.inspect(v, { depth: Infinity, colors: true })}`
-				: v
+				: chalkTemplates(chalk, v);
 		}).join(' ');
+	}
+
+	buildModifiedFunction(fn) {
+		fn.with = modifierName => {
+			if (typeof this.modifiers[modifierName] !== 'function')
+				return fn;
+
+			return (...args) => fn(...this.modifiers[modifierName](...args));
+		};
+
+		return fn;
 	}
 
 	log(tagName, ...args) {
@@ -95,12 +113,12 @@ export class Logger {
 		const timers = new Map();
 
 		return {
-			time: (key, ...args) => {
+			time: this.buildModifiedFunction((key, ...args) => {
 				timers.set(key, Date.now());
 				this.log('timeStart', ...args);
-			},
+			}),
 
-			timeEnd: (key, ...args) => {
+			timeEnd: this.buildModifiedFunction((key, ...args) => {
 				const time = timers.get(key);
 				let timeString;
 
@@ -122,7 +140,7 @@ export class Logger {
 				}
 
 				this.log('timeEnd', ...args, `(${timeString})`);
-			},
+			}),
 
 			scope: (...scopeTags) => {
 				const nextScope = this.scopeValues.concat(scopeTags);
@@ -134,7 +152,9 @@ export class Logger {
 			},
 
 			...Object.fromEntries(
-				Object.keys(this.tags).map(k => [ k, (...args) => this.log(k, ...args) ])
+				Object.keys(this.tags).map(k => [ k, this.buildModifiedFunction(
+					(...args) => this.log(k, ...args)
+				) ])
 			)
 		};
 	}

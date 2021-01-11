@@ -62,7 +62,7 @@ export default class ParserBase extends named() {
 				previousFetch.error = err;
 
 				if (this.recrond.config.debug.debugMode)
-					this.logger.debug('Error while downloading file', err);
+					this.logger.debug.with('i18n')('parser-download-retry', err, {});
 
 				if (isRetry && !ignoreError)
 					retryCount++;
@@ -79,7 +79,7 @@ export default class ParserBase extends named() {
 		try {
 			await fetcher.commit();
 		} catch(err) {
-			this.logger.error("Failed to commit staging folders!", err);
+			this.logger.error.with('i18n')('parser-commit-failed', err, {});
 			throw err;
 		}
 

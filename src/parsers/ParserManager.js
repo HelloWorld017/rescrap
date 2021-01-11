@@ -44,10 +44,10 @@ export default class ParserManager {
 			const parser = new ParserClass(this.recrond, fetcher, logger);
 			this.parsers.set(parserName, parser);
 
-			this.logger.info(`Loaded parser: ${parserName}`);
+			this.logger.info.with('i18n')('parser-load', { parserName });
 			return true;
 		} catch(err) {
-			this.logger.error(`Failed to load parser: ${parserPath}`, err);
+			this.logger.error.with('i18n')('parser-load-failed', err, { parserPath });
 			return false;
 		}
 	}

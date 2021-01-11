@@ -13,7 +13,7 @@ export default class PluginManager {
 
 	registerPlugin(plugin) {
 		this.plugins.set(plugin.name, plugin);
-		this.logger.info(`Loaded plugin: ${plugin.name}`);
+		this.logger.info.with('i18n')('plugin-load', { pluginName: plugin.name });
 	}
 
 	registerEvent(eventName, callback) {
@@ -61,7 +61,7 @@ export default class PluginManager {
 
 			return true;
 		} catch(err) {
-			this.logger.error(`Failed to load plugin: ${pluginPath}`, err);
+			this.logger.error.with('i18n')('plugin-load-failed', err, { pluginPath });
 			return false;
 		}
 	}
