@@ -1,7 +1,7 @@
 import globby from "globby";
 import { merge } from "../utils";
 import path from "path";
-import YAML from "yaml";
+import yaml from "yaml";
 
 import enUS from "./en_US.yml";
 
@@ -46,8 +46,8 @@ export default class I18n {
 
 	async loadI18n(i18nPath) {
 		const i18nContent = await fs.promises.readFile(i18nPath, 'utf8');
-		const i18nName = path.basename(i18nFile);
-		const i18nValue = YAML.parse(i18nContent);
+		const i18nName = path.basename(i18nPath, '.yml');
+		const i18nValue = yaml.parse(i18nContent);
 
 		this.registerLocale(i18nName, i18nValue);
 	}

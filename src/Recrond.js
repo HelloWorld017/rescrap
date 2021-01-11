@@ -3,10 +3,6 @@ import parsers from "./parsers";
 import plugins from "./plugins";
 
 class Recrond {
-	static models = models;
-	static parsers = parsers;
-	static plugins = plugins;
-
 	constructor({
 		sequelize,
 		basePath
@@ -33,6 +29,15 @@ class Recrond {
 		await this.pluginManager.initApplication();
 		await this.parserManager.initApplication();
 	}
+
+	static models = models;
+	get models() { return this.constructor.models; }
+
+	static parsers = parsers;
+	get parsers() { return this.constructor.parsers; }
+	
+	static plugins = plugins;
+	get plugins() { return this.constructor.plugins; }
 }
 
 export default Recrond;

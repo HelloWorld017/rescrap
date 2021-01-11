@@ -2,6 +2,7 @@ export default class PluginManager {
 	constructor(recrond) {
 		this.recrond = recrond;
 		this.logger = recrond.logger;
+		this.config = recrond.config;
 		this.plugins = new Map();
 		this.events = new Map();
 	}
@@ -51,9 +52,11 @@ export default class PluginManager {
 			const PluginClass = evaluate(pluginPath);
 
 			const pluginName = PluginClass.getName();
+			const pluginOption = this.config.plugins[pluginName] ?? {};
 			const logger = this.recrond.logger.scope(pluginName);
 
 			const plugin = new PluginClass(this.recrond, logger);
+			await plugin.install(pluginOption);
 			this.registerPlugin(plugin);
 
 			return true;

@@ -32,7 +32,7 @@ export default class ParserManager {
 			const ParserClass = evaluate(parserPath);
 
 			const parserName = ParserClass.getName();
-			const parserOption = this.config.parsers[parserName];
+			const parserOption = this.config.parsers[parserName] ?? {};
 
 			const logger = globalLogger.scope(parserName);
 			const fetcher = new Fetcher(

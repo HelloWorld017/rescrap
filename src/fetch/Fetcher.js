@@ -1,11 +1,13 @@
 import axios from "axios";
 import { axiosRetry, isRetryableError } from "axios-retry";
 import fs from "fs";
-import { merge } from "../utils";
+import { merge, sleep } from "../utils";
 import mergeConfig from "axios/lib/core/mergeConfig";
 import util from "util";
 
 class Fetcher {
+	static UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
+
 	constructor(recrond, options, logger) {
 		this.recrond = recrond;
 		this.options = options || { ...recrond.config.fetch };
@@ -19,6 +21,10 @@ class Fetcher {
 		this.unit = null;
 
 		this.axios = axios.create({
+			headers: {
+				'User-Agent': this.options.request.UserAgent || Fetcher.UserAgent
+			},
+
 			timeout: this.options.timeout
 		});
 
@@ -26,7 +32,7 @@ class Fetcher {
 			retries: this.options.maxRetry,
 			shouldResetTimeout: true,
 			retryCondition: error => isRetryableError(error) || error.code === 'ECONNABORTED',
-			retryDelay: count => count * 1000
+			retryDelay: count => count * this.options.request.retryDelay
 		});
 	}
 
@@ -154,6 +160,7 @@ class Fetcher {
 			await this.download(req, file, retry);
 		}
 
+		await sleep(this.options.download.delay);
 		return { request, response };
 	}
 
