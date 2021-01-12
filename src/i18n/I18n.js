@@ -6,8 +6,8 @@ import yaml from "yaml";
 import enUS from "./en_US.yml";
 
 export default class I18n {
-	constructor(recrond) {
-		this.recrond = recrond;
+	constructor(rescrap) {
+		this.rescrap = rescrap;
 		this.localeCode = 'en_US';
 		this.fallbackLocale = 'en_US';
 		this.locales = {
@@ -16,7 +16,7 @@ export default class I18n {
 	}
 
 	async initApplication() {
-		this.setLocale(this.recrond.config.locale);
+		this.setLocale(this.rescrap.config.locale);
 		await loadI18ns();
 	}
 
@@ -36,11 +36,11 @@ export default class I18n {
 		const i18ns = await globby([
 			"locales/*.yml"
 		], {
-			cwd: this.recrond.basePath
+			cwd: this.rescrap.basePath
 		});
 
 		for (const i18nFile of i18ns) {
-			await this.loadI18n(path.join(this.recrond.basePath, i18nFile));
+			await this.loadI18n(path.join(this.rescrap.basePath, i18nFile));
 		}
 	}
 

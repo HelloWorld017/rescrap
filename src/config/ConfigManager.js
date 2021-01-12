@@ -18,7 +18,7 @@ export const DefaultConfig = {
 
 		download: {
 			delay: 1000,
-			path: './recrond/downloads'
+			path: './rescrap/downloads'
 		}
 	},
 	debug: {
@@ -28,9 +28,9 @@ export const DefaultConfig = {
 };
 
 export default class ConfigManager {
-	constructor(recrond) {
-		this.recrond = recrond;
-		this.logger = recrond.logger.scope('config');
+	constructor(rescrap) {
+		this.rescrap = rescrap;
+		this.logger = rescrap.logger.scope('config');
 		this._config = merge([ {}, DefaultConfig ]);
 	}
 
@@ -42,11 +42,11 @@ export default class ConfigManager {
 		const configs = await globby([
 			"config/*.yml"
 		], {
-			cwd: this.recrond.basePath
+			cwd: this.rescrap.basePath
 		});
 
 		for (const configFile of configs) {
-			const configContent = await fs.promises.readFile(path.join(this.recrond.basePath, configFile), 'utf8');
+			const configContent = await fs.promises.readFile(path.join(this.rescrap.basePath, configFile), 'utf8');
 			const configName = path.basename(configFile, '.yml');
 			const configValue = yaml.parse(configContent);
 			this.overrideConfig(configValue);

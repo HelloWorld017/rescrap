@@ -2,10 +2,10 @@ import ModelUnit from "../models/ModelUnit";
 import { named } from "../utils";
 
 export default class ParserBase extends named() {
-	constructor(recrond, fetcher, logger) {
+	constructor(rescrap, fetcher, logger) {
 		super();
 
-		this.recrond = recrond;
+		this.rescrap = rescrap;
 		this.fetcher = fetcher;
 		this.logger = logger;
 		this.implemented = [];
@@ -61,7 +61,7 @@ export default class ParserBase extends named() {
 				previousFetch = err;
 				previousFetch.error = err;
 
-				if (this.recrond.config.debug.debugMode)
+				if (this.rescrap.config.debug.debugMode)
 					this.logger.debug.with('i18n')('parser-download-retry', err, {});
 
 				if (isRetry && !ignoreError)
@@ -106,12 +106,12 @@ export default class ParserBase extends named() {
 	}
 
 	init(...args) {
-		return this.recrond.pluginManager
+		return this.rescrap.pluginManager
 			.execute(this, 'parser/init', args, this._init.bind(this));
 	}
 
 	listUnit(...args) {
-		return this.recrond.pluginManager
+		return this.rescrap.pluginManager
 			.execute(this, 'parser/listUnit', args, this._listUnit.bind(this));
 	}
 
@@ -125,17 +125,17 @@ export default class ParserBase extends named() {
 			globalFetcher
 		);
 
-		return this.recrond.pluginManager
+		return this.rescrap.pluginManager
 			.execute(this, 'parser/download', [ unit, globalFetcher ], this._download.bind(this));
 	}
 
 	listFileIterator(...args) {
-		return this.recrond.pluginManager
+		return this.rescrap.pluginManager
 			.execute(this, 'parser/listFileIterator', args, this._listFileIterator.bind(this));
 	}
 
 	postProcess(...args) {
-		return this.recrond.pluginManager
+		return this.rescrap.pluginManager
 			.execute(this, 'parser/postProcess', args, this._postProcess.bind(this));
 	}
 }

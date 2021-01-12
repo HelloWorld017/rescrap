@@ -2,7 +2,7 @@ import models, { init as initModels } from "./models";
 import parsers from "./parsers";
 import plugins from "./plugins";
 
-class Recrond {
+class Rescrap {
 	constructor({
 		sequelize,
 		basePath
@@ -12,7 +12,7 @@ class Recrond {
 
 		initModels(this.sequelize);
 
-		this.loggerManager = new RecrondLogger(this);
+		this.loggerManager = new RescrapLogger(this);
 		this.logger = this.loggerManager.createLogger();
 
 		this.configManager = new ConfigManager(this);
@@ -43,4 +43,4 @@ class Recrond {
 	get plugins() { return this.constructor.plugins; }
 }
 
-export default Recrond;
+export default Rescrap;

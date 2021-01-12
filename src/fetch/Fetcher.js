@@ -8,11 +8,11 @@ import util from "util";
 class Fetcher {
 	static UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
 
-	constructor(recrond, options, logger) {
-		this.recrond = recrond;
-		this.options = options || { ...recrond.config.fetch };
+	constructor(rescrap, options, logger) {
+		this.rescrap = rescrap;
+		this.options = options || { ...rescrap.config.fetch };
 
-		this.globalLogger = logger || recrond.logger;
+		this.globalLogger = logger || rescrap.logger;
 		this.logger = this.globalLogger.scope('fetcher');
 
 		this.downloadPath = options.download.path;
@@ -48,7 +48,7 @@ class Fetcher {
 
 		try {
 			const response = await this.axios(mergedConfig);
-			if(this.recrond.config.debug.dumpRequest) {
+			if(this.rescrap.config.debug.dumpRequest) {
 				await fs.promises.mkdir('./dumps', { recursive: true });
 				await fs.promises.writeFile(`./dumps/${Date.now()}.txt`, util.inspect(resp));
 			}

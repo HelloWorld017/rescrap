@@ -3,10 +3,10 @@ import globby from "globby";
 import path from "path";
 
 export default class ParserManager {
-	constructor(recrond) {
-		this.config = recrond.config;
-		this.logger = recrond.logger;
-		this.recrond = recrond;
+	constructor(rescrap) {
+		this.config = rescrap.config;
+		this.logger = rescrap.logger;
+		this.rescrap = rescrap;
 		this.parsers = new Map();
 	}
 
@@ -19,11 +19,11 @@ export default class ParserManager {
 			"parsers/*.js",
 			"parsers/*/index.js"
 		], {
-			cwd: this.recrond.basePath
+			cwd: this.rescrap.basePath
 		});
 
 		for (const parserPath of parsers) {
-			await loadParser(path.join(this.recrond.basePath, parserPath));
+			await loadParser(path.join(this.rescrap.basePath, parserPath));
 		}
 	}
 
@@ -36,12 +36,12 @@ export default class ParserManager {
 
 			const logger = globalLogger.scope(parserName);
 			const fetcher = new Fetcher(
-				this.recrond,
+				this.rescrap,
 				parserOption.fetch,
 				logger
 			);
 
-			const parser = new ParserClass(this.recrond, fetcher, logger);
+			const parser = new ParserClass(this.rescrap, fetcher, logger);
 			this.parsers.set(parserName, parser);
 
 			this.logger.info.with('i18n')('parser-load', { parserName });

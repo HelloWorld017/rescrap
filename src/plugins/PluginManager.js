@@ -1,8 +1,8 @@
 export default class PluginManager {
-	constructor(recrond) {
-		this.recrond = recrond;
-		this.logger = recrond.logger;
-		this.config = recrond.config;
+	constructor(rescrap) {
+		this.rescrap = rescrap;
+		this.logger = rescrap.logger;
+		this.config = rescrap.config;
 		this.plugins = new Map();
 		this.events = new Map();
 	}
@@ -39,11 +39,11 @@ export default class PluginManager {
 			"plugins/*.js",
 			"plugins/*/index.js"
 		], {
-			cwd: this.recrond.basePath
+			cwd: this.rescrap.basePath
 		});
 
 		for (const pluginPath of plugins) {
-			await loadPlugin(path.join(this.recrond.basePath, pluginPath));
+			await loadPlugin(path.join(this.rescrap.basePath, pluginPath));
 		}
 	}
 
@@ -53,9 +53,9 @@ export default class PluginManager {
 
 			const pluginName = PluginClass.getName();
 			const pluginOption = this.config.plugins[pluginName] ?? {};
-			const logger = this.recrond.logger.scope(pluginName);
+			const logger = this.rescrap.logger.scope(pluginName);
 
-			const plugin = new PluginClass(this.recrond, logger);
+			const plugin = new PluginClass(this.rescrap, logger);
 			await plugin.install(pluginOption);
 			this.registerPlugin(plugin);
 
