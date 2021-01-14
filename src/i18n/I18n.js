@@ -74,10 +74,10 @@ export default class I18n {
 
 		return (translationKey, ...args) => {
 			if (typeof translationKey === 'string') {
-				if (args.length > 0) {
+				if (args.length > 1) {
 					return [
-						i18n.t(translationKey, args[args.length - 1]),
-						...args.slice(0, -1)
+						i18n.t(translationKey, args[1]),
+						...args.slice(1)
 					];
 				}
 				return [ i18n.t(translationKey) ];

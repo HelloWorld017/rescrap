@@ -16,14 +16,18 @@ export default class ParserBase extends named() {
 		this.options = options;
 	}
 
-	async _listUnit(data) {
+	// Should yield parent units and return all children units
+	async *_fetchUnits(dataItem) {
 		return [];
 	}
 
+	// Should return array of files (ModelFiles[]).
+	// Can be overriden if custom listFileIterator is set
 	async _listFile(unit) {
 		return [];
 	}
 
+	// Should yield { file: ModelFile , ignoreError: bool }
 	async *_listFileIterator(unit) {
 		const files = await this.listFile(unit);
 
@@ -62,7 +66,7 @@ export default class ParserBase extends named() {
 				previousFetch.error = err;
 
 				if (this.rescrap.config.debug.debugMode)
-					this.logger.debug.with('i18n')('parser-download-retry', err, {});
+					this.logger.debug.with('i18n')('parser-download-retry', {}, err);
 
 				if (isRetry && !ignoreError)
 					retryCount++;
@@ -79,7 +83,7 @@ export default class ParserBase extends named() {
 		try {
 			await fetcher.commit();
 		} catch(err) {
-			this.logger.error.with('i18n')('parser-commit-failed', err, {});
+			this.logger.error.with('i18n')('parser-commit-failed', {}, err);
 			throw err;
 		}
 
@@ -105,17 +109,23 @@ export default class ParserBase extends named() {
 		return unit;
 	}
 
-	init(...args) {
+	async init(...args) {
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/init', args, this._init.bind(this));
 	}
 
-	listUnit(...args) {
+	async fetchUnits(...args) {
 		return this.rescrap.pluginManager
-			.execute(this, 'parser/listUnit', args, this._listUnit.bind(this));
+			.execute(this, 'parser/fetchUnits', args, (...args) => {
+				const iteratorOrArray = await this._fetchUnits.bind(this);
+				if (!Array.isArray(iteratorOrArray))
+					return iteratorOrArray;
+
+				return (async function* () { return iteratorOrArray })();
+			});
 	}
 
-	download(unit, globalFetcher) {
+	async download(unit, globalFetcher) {
 		const terminal = await unit.getTerminal();
 		if (!terminal || terminal.downloaded) return;
 
@@ -125,16 +135,16 @@ export default class ParserBase extends named() {
 			globalFetcher
 		);
 
-		return this.rescrap.pluginManager
+		return await this.rescrap.pluginManager
 			.execute(this, 'parser/download', [ unit, globalFetcher ], this._download.bind(this));
 	}
 
-	listFileIterator(...args) {
+	async listFileIterator(...args) {
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/listFileIterator', args, this._listFileIterator.bind(this));
 	}
 
-	postProcess(...args) {
+	async postProcess(...args) {
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/postProcess', args, this._postProcess.bind(this));
 	}

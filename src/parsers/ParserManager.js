@@ -47,7 +47,7 @@ export default class ParserManager {
 			this.logger.info.with('i18n')('parser-load', { parserName });
 			return true;
 		} catch(err) {
-			this.logger.error.with('i18n')('parser-load-failed', err, { parserPath });
+			this.logger.error.with('i18n')('parser-load-failed', { parserPath }, err);
 			return false;
 		}
 	}

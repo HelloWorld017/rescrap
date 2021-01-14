@@ -40,7 +40,7 @@ class Fetcher {
 		return await this.request({ uri }, req);
 	}
 
-	async request(...reqs) {
+	async _request(...reqs) {
 		const mergedConfig = req.reduce(
 			(base, config) => mergeConfig(base, config),
 			{}
@@ -57,6 +57,11 @@ class Fetcher {
 		} catch (err) {
 			throw err;
 		}
+	}
+
+	async request(...args) {
+		return await this.rescrap.pluginManager
+			.execute(this, 'fetcher/request', args, this._request.bind(this));
 	}
 
 	async ensureDest() {
@@ -100,7 +105,7 @@ class Fetcher {
 		return scopedFetcher.ensureDest();
 	}
 
-	async download(req, file, retry = 0) {
+	async _download(req, file, retry = 0) {
 		if(!this.unit)
 			throw new Error("Fetcher not scoped!");
 
@@ -120,14 +125,10 @@ class Fetcher {
 
 			const promises = [];
 
-			promises.push(new Promise((resolve, reject) => {
-				promisePipe(
-					destStream,
-					fs.createWriteStream(path.join(this.downloadPath, file.dest))
-				)
-				.then(resolve)
-				.catch(reject);
-			}));
+			promises.push(promisePipe(
+				destStream,
+				fs.createWriteStream(path.join(this.downloadPath, file.dest))
+			));
 
 			if (this.options.timeout)
 				promises.push(new Promise((resolve, reject) => {
@@ -159,10 +160,10 @@ class Fetcher {
 				throw err;
 			}
 
-			this.logger.debug.with('i18n')(
+			this.logger.verboseWarn.with('i18n')(
 				'fetcher-download-failed',
-				err,
-				{ unitName: this.unit.name, fileId: file.id }
+				{ unitName: this.unit.name, fileId: file.id },
+				err
 			);
 			await this.download(req, file, retry);
 		}
@@ -171,13 +172,23 @@ class Fetcher {
 		return { request, response };
 	}
 
-	async commit() {
+	async download(...args) {
+		return await this.rescrap.pluginManager
+			.execute(this, 'fetcher/download', args, this._download.bind(this));
+	}
+
+	async _commit() {
 		if (!this.stageTargetPath)
 			return;
 
 		await fs.promises.rename(this.downloadPath, this.stageTargetPath);
 		this.downloadPath = this.stageTargetPath;
 		this.stageTargetPath = null;
+	}
+
+	async commit(...args) {
+		return await this.rescrap.pluginManager
+			.execute(this, 'fetcher/commit', args, this._commit.bind(this));
 	}
 }
 

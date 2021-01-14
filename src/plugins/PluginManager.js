@@ -61,7 +61,7 @@ export default class PluginManager {
 
 			return true;
 		} catch(err) {
-			this.logger.error.with('i18n')('plugin-load-failed', err, { pluginPath });
+			this.logger.error.with('i18n')('plugin-load-failed', { pluginPath }, err);
 			return false;
 		}
 	}

@@ -83,12 +83,17 @@ export class Logger {
 		}).join(' ');
 	}
 
-	buildModifiedFunction(fn) {
+	buildModifiedFunction(fn, prependArgsCount = 0) {
 		fn.with = modifierName => {
 			if (typeof this.modifiers[modifierName] !== 'function')
 				return fn;
 
-			return (...args) => fn(...this.modifiers[modifierName](...args));
+			return (...args) => {
+				const prependArgs = args.slice(0, prependArgsCount);
+				const appendArgs = args.slice(prependArgsCount);
+
+				return fn(prependArgs, ...this.modifiers[modifierName](...appendArgs));
+			};
 		};
 
 		return fn;
@@ -116,7 +121,7 @@ export class Logger {
 			time: this.buildModifiedFunction((key, ...args) => {
 				timers.set(key, Date.now());
 				this.log('timeStart', ...args);
-			}),
+			}, 1),
 
 			timeEnd: this.buildModifiedFunction((key, ...args) => {
 				const time = timers.get(key);
@@ -140,7 +145,7 @@ export class Logger {
 				}
 
 				this.log('timeEnd', ...args, `(${timeString})`);
-			}),
+			}, 1),
 
 			scope: (...scopeTags) => {
 				const nextScope = this.scopeValues.concat(scopeTags);

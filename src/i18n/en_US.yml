@@ -1,10 +1,18 @@
 "locale": "en_US"
+
 "config-load": "Loaded config: {configName}"
+
+"command-args-safe": "Run in safe mode"
+"command-args-path": "Set configuration directory path. Defaults to ./rescrap"
+"command-cron-description": "Do a single cron job"
+
 "fetcher-download-complete": "Downloaded {unitName} > {fileId}"
 "fetcher-download-failed": "Error downloading {unitName} > {fileId}"
+
 "parser-commit-failed": "Failed to commit staging folders!"
 "parser-download-retry": "Error while downloading file! Retrying..."
 "parser-load": "Loaded parser: {parserName}"
 "parser-load-failed": "Failed to load parser: {parserPath}"
+
 "plugin-load": "Loaded plugin: {pluginName}"
 "plugin-load-failed": "Failed to load plugin: {pluginPath}"
