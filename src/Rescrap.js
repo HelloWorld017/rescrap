@@ -6,7 +6,7 @@ import * as plugins,	PluginManager from "./plugins";
 import ConfigManager from "./config";
 import Fetcher from "./fetcher";
 import I18n from "./i18n";
-import Logger from "./logger";
+import Logger, { LogLevel, HandlerFile, HandlerConsole } from "./logger";
 import PromisePool from "es6-promise-pool";
 import { Sequelize } from "sequelize";
 
@@ -21,10 +21,20 @@ class Rescrap {
 
 		this.configManager = new ConfigManager(this);
 		this.config = this.configManager.getConfig();
+		if (this.config.logging.console.enabled)
+			this.loggerManager.addHandler(new HandlerConsole(this.config.logging.console.level));
+
+		if (this.config.logging.file.enabled)
+			this.loggerManager.addHandler(
+				new HandlerFile(this.config.logging.file.level, this.config.logging.file.dest)
+			);
 
 		this.i18nManager = new I18n(this);
 		this.i18n = this.i18nManager.createI18n();
 		this.logger.addModifier('i18n', this.i18nManager.createLoggerModifier());
+		this.logger.info.with('i18n')('config-load', {
+			files: configManager.files.join(',')
+		});
 
 		this.sequelize = new Sequelize(this.config.rescrap.database);
 		initModels(this.sequelize);

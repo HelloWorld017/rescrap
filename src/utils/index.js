@@ -1,3 +1,4 @@
+import { createRequire } from 'module';
 import deepmerge from "deepmerge";
 import fs from "fs";
 import path from "path";
@@ -21,22 +22,49 @@ export function named(BaseClass = Object) {
 }
 
 export async function evaluate(filePath, context) {
+	const absPath = path.resolve(filePath);
 	const fileName = path.basename(filePath);
 
-	const fileContent = await fs.promises.readFile(filePath, 'utf8');
-	const script = new vm.Script(content, { filename: fileName });
+	const fileContent = await fs.promises.readFile(absPath, 'utf8');
+	const script = new vm.Script(fileContent, { filename: fileName });
 
-	const exportModule = { exports: {} };
+	const scriptModule = new Module(absPath, module);
+	scriptModule.paths = [
+		...module.paths,
+		...(Module._nodeModulePaths(scriptModule.path))
+	].filter(
+		(value, index, array) => array.indexOf(value) === index
+	);
 
-	parserScript.runInNewContext({
-		require,
+	// Create a fake require function, as node doesn't exposes internal/modules/cjs/helpers
+	const scriptRequire = function require(path) {
+		return scriptModule.require(path);
+	};
+
+	scriptRequire.resolve = function(request, options) {
+		return Module._resolveFilename(request, scriptModule, false, options);
+	};
+
+	scriptRequire.resolve.paths = function(request) {
+		return Module._resolveLookupPaths(request, scriptModule);
+	};
+
+	scriptRequire.main = process.mainModule;
+	scriptRequire.extensions = Module._extensions;
+	scriptRequire.cache = Module._cache;
+
+	script.runInNewContext({
 		console,
-		module: exportModule,
-		exports: exportModule.exports,
+		require: scriptRequire,
+		module: scriptModule,
+		exports: scriptModule.exports,
+		__filename: scriptModule.filename,
+		__dirname: scriptModule.path,
 		...context
 	});
 
-	return exportModule.exports;
+	scriptModule.loaded = true;
+	return scriptModule.exports;
 }
 
 export function merge(items, arrayMerge = false) {

@@ -1,5 +1,8 @@
 import chalk from "chalk";
+import { format as formatDate } from "date-fns";
+import fs from "fs";
 import stripAnsi from "strip-ansi";
+import path from "path";
 
 export class HandlerBase {
     constructor(logLevel) {
@@ -14,6 +17,14 @@ export class HandlerBase {
 export class HandlerFile extends HandlerBase {
     constructor(logLevel, file) {
         super(logLevel);
+
+        const date = new Date();
+        const dest = file
+            .replace(/{date}/g, `${Math.floor(date.getTime() / 1000)}`)
+            .replace(/{datestr}/g, formatDate(new Date(), "yyyy-mm-dd kk.mm.ss"));
+
+        const logdir = path.dirname(file);
+        fs.mkdirSync(logdir, { recursive: true });
 
         this.file = file;
         this.writeQueue = null;

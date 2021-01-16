@@ -21,6 +21,18 @@ export const DefaultConfig = {
 			path: './rescrap/downloads'
 		}
 	},
+	logging: {
+		console: {
+			enabled: true,
+			level: 'info'
+		},
+
+		file: {
+			enabled: true,
+			dest: './rescrap/logs/{datestr}.log',
+			level: 'verbose'
+		}
+	},
 	debug: {
 		debugMode: false,
 		dumpRequest: false
@@ -31,6 +43,7 @@ export default class ConfigManager {
 	constructor(rescrap) {
 		this.rescrap = rescrap;
 		this.logger = rescrap.logger.scope('config');
+		this.files = [];
 		this._config = merge([ {}, DefaultConfig ]);
 	}
 
@@ -51,7 +64,7 @@ export default class ConfigManager {
 			const configValue = yaml.parse(configContent);
 			this.overrideConfig(configValue);
 
-			this.logger.info.with('i18n')('config-load', { configName });
+			this.files.push(configFile);
 		}
 	}
 
