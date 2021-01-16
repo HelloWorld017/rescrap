@@ -1,3 +1,5 @@
+import Command from "./Command";
+
 export default class CommandCron extends Command {
 	constructor(rescrap) {
 		super()
@@ -31,12 +33,12 @@ export default class CommandCron extends Command {
 				},
 				(parsers[0] || '').startsWith('-') ? watchingParsers.slice() : []
 			);
-		
+
 		const { finished: updates, errors: updateErrors } = await this._runJob(
 			selectedParsers,
 			'update',
 			(...args) => rescrap.findUpdates(...args),
-			parser => [ rescrap.config.watching[parser] ])
+			parser => [ rescrap.config.watching[parser] ]
 		);
 
 		const { finished: downloads, errors: downloadErrors } = await this._runJob(
@@ -49,7 +51,7 @@ export default class CommandCron extends Command {
 		return { updates, updateErrors, downloads, downloadErrors };
 	}
 
-	_runJob(selectedParsers, name, jobFn, argsFn) {
+	async _runJob(selectedParsers, name, jobFn, argsFn) {
 		const rescrap = this.rescrap;
 		const logger = rescrap.logger;
 		const concurrency = rescrap.config.rescrap.parallelParsers;

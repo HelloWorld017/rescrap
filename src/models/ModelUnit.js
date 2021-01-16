@@ -1,5 +1,6 @@
-class ModelUnit extends Model {}
-export default ModelUnit;
+import { DataTypes, Model, Op } from "sequelize";
+
+export default class ModelUnit extends Model {}
 export function init (sequelize) {
 	ModelUnit.init(
 		{
@@ -32,14 +33,14 @@ export function init (sequelize) {
 			indexes: [
 				{
 					unique: true,
-					fields: [ 'key', 'hierarchy_level' ],
-					where: { hierarchy_level: 1 }
+					fields: [ 'key', 'hierarchyLevel' ],
+					where: { hierarchyLevel: 1 }
 				},
 
 				{
 					unique: true,
-					fields: [ 'key', 'parent_id' ],
-					where: { hierarchy_level: { $gt: 1 } }
+					fields: [ 'key', 'parentId' ],
+					where: { hierarchyLevel: { [ Op.gt ] : 1 } }
 				}
 			],
 			modelName: 'Unit',

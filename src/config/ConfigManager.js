@@ -1,3 +1,5 @@
+import fs from "fs";
+import globby from "globby";
 import path from "path";
 import { merge } from "../utils";
 import yaml from "yaml";
@@ -33,6 +35,9 @@ export const DefaultConfig = {
 			level: 'verbose'
 		}
 	},
+	rescrap: {
+		database: 'sqlite::memory:'
+	},
 	debug: {
 		debugMode: false,
 		dumpRequest: false
@@ -43,12 +48,16 @@ export default class ConfigManager {
 	constructor(rescrap) {
 		this.rescrap = rescrap;
 		this.logger = rescrap.logger.scope('config');
-		this.files = [];
+		this.files = [ '<default>' ];
 		this._config = merge([ {}, DefaultConfig ]);
 	}
 
 	async initApplication() {
 		await this.loadConfigs();
+
+		this.logger.info.with('i18n')('config-load', {
+			files: this.files.join(', ')
+		});
 	}
 
 	async loadConfigs() {
@@ -59,28 +68,37 @@ export default class ConfigManager {
 		});
 
 		for (const configFile of configs) {
-			const configContent = await fs.promises.readFile(path.join(this.rescrap.basePath, configFile), 'utf8');
-			const configName = path.basename(configFile, '.yml');
-			const configValue = yaml.parse(configContent);
-			this.overrideConfig(configValue);
+			try {
+				const configContent = await fs.promises.readFile(path.join(this.rescrap.basePath, configFile), 'utf8');
+				const configName = path.basename(configFile, '.yml');
+				const configValue = yaml.parse(configContent);
+				this.overrideConfig(configValue);
 
-			this.files.push(configFile);
+				this.files.push(configFile);
+			} catch (err) {
+				this.logger.error.with('i18n')(
+					'config-load-failed',
+					{ file: configFile },
+					err
+				);
+			}
 		}
 	}
 
 	overrideConfig(config) {
-		this._config = merge([ this.config, config ]);
+		this._config = merge([ this._config, config ]);
 	}
 
 	getConfig() {
+		const configManager = this;
 		return new Proxy(
 			{},
 			{
 				get(_, prop) {
-					if (!this.config.hasOwnProperty(prop))
+					if (!configManager._config.hasOwnProperty(prop))
 						return undefined;
 
-					return this.config[prop];
+					return configManager._config[prop];
 				}
 			}
 		);

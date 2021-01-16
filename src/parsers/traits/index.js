@@ -1,3 +1,3 @@
-export Trait from "./Trait";
-export TraitCheckComplete from "./TraitCheckComplete";
-export TraitSearch from "./TraitSearch";
+export { default as Trait } from "./Trait";
+export { default as TraitCheckComplete } from "./TraitCheckComplete";
+export { default as TraitSearch } from "./TraitSearch";

@@ -1,50 +1,61 @@
-import * as models,		initModels from "./models";
-import * as commands,	CommandManager from "./commands";
-import * as parsers,	ParserManager from "./parsers";
-import * as plugins,	PluginManager from "./plugins";
+import initModels,		* as models from "./models";
+import CommandManager,	* as commands from "./commands";
+import ParserManager,	* as parsers from "./parsers";
+import PluginManager,	* as plugins from "./plugins";
 
 import ConfigManager from "./config";
-import Fetcher from "./fetcher";
+import Fetcher from "./fetch";
 import I18n from "./i18n";
 import Logger, { LogLevel, HandlerFile, HandlerConsole } from "./logger";
 import PromisePool from "es6-promise-pool";
 import { Sequelize } from "sequelize";
 
-class Rescrap {
-	constructor({
-		basePath = "./rescrap"
-	}) {
-		this.basePath = basePath;
+import sequelizeLogger from "sequelize/lib/utils/logger";
+import sequelizeHierarchy from "@dataee/sequelize-hierarchy";
 
-		this.loggerManager = new Logger(this);
+class Rescrap {
+	constructor(config = {}) {
+		this.basePath = config.basePath || "./rescrap";
+
+		this.loggerManager = new Logger();
 		this.logger = this.loggerManager.createLogger();
 
 		this.configManager = new ConfigManager(this);
+		this.configManager.overrideConfig(config);
 		this.config = this.configManager.getConfig();
+
 		if (this.config.logging.console.enabled)
-			this.loggerManager.addHandler(new HandlerConsole(this.config.logging.console.level));
+			this.loggerManager.addHandler(new HandlerConsole(
+				LogLevel[this.config.logging.console.level.toUpperCase()]
+			));
 
 		if (this.config.logging.file.enabled)
-			this.loggerManager.addHandler(
-				new HandlerFile(this.config.logging.file.level, this.config.logging.file.dest)
-			);
+			this.loggerManager.addHandler(new HandlerFile(
+				LogLevel[this.config.logging.file.level.toUpperCase()],
+				this.config.logging.file.dest
+			));
 
 		this.i18nManager = new I18n(this);
 		this.i18n = this.i18nManager.createI18n();
-		this.logger.addModifier('i18n', this.i18nManager.createLoggerModifier());
-		this.logger.info.with('i18n')('config-load', {
-			files: configManager.files.join(',')
-		});
+		this.loggerManager.addModifier('i18n', this.i18nManager.createLoggerModifier());
 
-		this.sequelize = new Sequelize(this.config.rescrap.database);
+		sequelizeHierarchy(Sequelize);
+		sequelizeLogger.logger.warn = (...msg) => this.logger.scope('database').warn(...msg);
+
+		this.sequelize = new Sequelize(this.config.rescrap.database, {
+			logging: (...messages) => {
+				this.logger.verbose(...messages.filter(msg => typeof msg === 'string'))
+			}
+		});
 		initModels(this.sequelize);
 
 		this.fetcher = new Fetcher(this);
 		this.pluginManager = new PluginManager(this);
 		this.parserManager = new ParserManager(this);
+		this.commandManager = new CommandManager(this);
 	}
 
-	initApplication() {
+	async initApplication() {
 		await this.configManager.initApplication();
 		await this.i18nManager.initApplication();
 		await this.pluginManager.initApplication();
@@ -52,7 +63,7 @@ class Rescrap {
 		this.logger.finish.with('i18n')('rescrap-init');
 	}
 
-	findUpdates(parserName, dataItems) {
+	async findUpdates(parserName, dataItems) {
 		const parser = this.parserManager.parsers.get(parserName);
 		const updates = [], errors = [];
 
@@ -126,7 +137,7 @@ class Rescrap {
 		return { finished: updates, finishedCount, errors };
 	}
 
-	downloadUpdates(parserName, updatedUnits) {
+	async downloadUpdates(parserName, updatedUnits) {
 		const parser = this.parserManager.parsers.get(parserName);
 		const downloaded = [], errors = [];
 

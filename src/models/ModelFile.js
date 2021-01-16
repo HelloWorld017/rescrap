@@ -1,8 +1,8 @@
+import { DataTypes, Model } from "sequelize";
 import ModelTerminal from "./ModelTerminal";
 
-class ModelFile extends Model {}
-export default ModelFile;
-export function init () {
+export default class ModelFile extends Model {}
+export function init (sequelize) {
 	ModelFile.init({
 		id: {
 			type: DataTypes.INTEGER,

@@ -1,4 +1,4 @@
-import { named } from "../../utils";
+import { named } from "../utils";
 
 export default class Plugin extends named() {
 	constructor(rescrap, logger) {

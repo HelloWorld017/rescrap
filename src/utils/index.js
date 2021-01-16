@@ -1,12 +1,9 @@
-import { createRequire } from 'module';
 import deepmerge from "deepmerge";
 import fs from "fs";
 import path from "path";
 import vm from "vm";
 
-export * from "./db";
-export * from "./filesystem";
-export * from "./promise";
+import { Module } from 'module';
 
 export function named(BaseClass = Object) {
 	return class Named extends BaseClass {
@@ -68,7 +65,7 @@ export async function evaluate(filePath, context) {
 }
 
 export function merge(items, arrayMerge = false) {
-	deepmerge(items, {
+	return deepmerge.all(items, {
 		arrayMerge: arrayMerge ?
 			(target, source, options) =>
 				source.reduce((dest, item) => {
@@ -81,3 +78,7 @@ export function merge(items, arrayMerge = false) {
 			(target, source, options) => source
 	})
 }
+
+export * from "./db";
+export * from "./filesystem";
+export * from "./promise";

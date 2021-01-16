@@ -1,6 +1,6 @@
 "locale": "en_US"
 
-"config-load": "Loaded config: {configName}"
+"config-load": "Loaded config: {files}"
 
 "command-args-safe": "Run in safe mode"
 "command-args-path": "Set configuration directory path. Defaults to ./rescrap"

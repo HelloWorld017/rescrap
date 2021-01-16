@@ -1,5 +1,4 @@
 import chalk from "chalk";
-import chalkTemplates from "chalk/templates";
 import util from 'util';
 
 export const LogLevel = {
@@ -37,35 +36,35 @@ export class Logger {
 			info: {
 				level: LogLevel.INFO,
 				label: 'INFO',
-				styles: [ 'bgCyan' ],
+				styles: [ 'cyan' ],
 				badge: '＊'
 			},
 
 			warn: {
 				level: LogLevel.WARN,
 				label: 'WARNING',
-				styles: [ 'bgYellow', 'black' ],
+				styles: [ 'yellow', 'underline' ],
 				badge: '!'
 			},
 
 			error: {
 				level: LogLevel.ERROR,
 				label: 'ERROR',
-				styles: [ 'bgRed' ],
+				styles: [ 'red', 'underline' ],
 				badge: '×'
 			},
 
 			timeStart: {
 				level: LogLevel.INFO,
 				label: 'START',
-				styles: [ 'bgGreen', 'black' ],
+				styles: [ 'green' ],
 				badge: '▶'
 			},
 
 			timeEnd: {
 				level: LogLevel.INFO,
 				label: 'END',
-				styles: [ 'bgRed' ],
+				styles: [ 'red' ],
 				badge: '■'
 			}
 		};
@@ -77,9 +76,10 @@ export class Logger {
 
 	buildContentString(args) {
 		return args.map(v => {
-			return (typeof v === 'object' && v !== null)
-				? `\n${util.inspect(v, { depth: Infinity, colors: true })}`
-				: chalkTemplates(chalk, v);
+			if (typeof v === 'object' && v !== null)
+				return `\n${util.inspect(v, { depth: Infinity, colors: true })}`;
+
+			return v;
 		}).join(' ');
 	}
 
@@ -92,7 +92,7 @@ export class Logger {
 				const prependArgs = args.slice(0, prependArgsCount);
 				const appendArgs = args.slice(prependArgsCount);
 
-				return fn(prependArgs, ...this.modifiers[modifierName](...appendArgs));
+				return fn(...prependArgs, ...this.modifiers[modifierName](...appendArgs));
 			};
 		};
 
@@ -104,7 +104,7 @@ export class Logger {
 			tag: this.tags[tagName],
 			content: this.buildContentString(args),
 			time: new Date(),
-			scope: this.scopeValues
+			scope: this.scopeValues.slice()
 		};
 
 		this.handlers.forEach(handler => handler.write(logObject));
@@ -151,7 +151,8 @@ export class Logger {
 				const nextScope = this.scopeValues.concat(scopeTags);
 
 				const nextLogger = new this.constructor(nextScope);
-				this.handlers.forEach(handler => nextLogger.addHandler(handler));
+				nextLogger.handlers = this.handlers;
+				nextLogger.modifiers = this.modifiers;
 
 				return nextLogger.createLogger();
 			},

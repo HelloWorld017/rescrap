@@ -11,35 +11,35 @@ export default class RescrapLogger extends Logger {
 				progress: {
 				  level: LogLevel.INFO,
 				  label: 'PROGRESS',
-				  styles: [ 'bgMagenta' ],
+				  styles: [ 'magenta' ],
 				  badge: '…'
 				},
 
 				download: {
 				  level: LogLevel.INFO,
 				  label: 'DOWNLOAD',
-				  styles: [ 'bgMagenta' ],
+				  styles: [ 'magenta' ],
 				  badge: '↓'
 				},
 
 				finish: {
 				  level: LogLevel.INFO,
 				  label: 'FINISH',
-				  styles: [ 'bgGreen', 'black' ],
+				  styles: [ 'green' ],
 				  badge: '∴'
 				},
 
 				verboseWarn: {
 				  level: LogLevel.VERBOSE,
 				  label: 'WARNING',
-				  styles: [ 'bgYellow', 'black' ],
+				  styles: [ 'yellow', 'underline' ],
 				  badge: '!'
 				},
 
 				fatal: {
 				  level: LogLevel.ERROR,
 				  label: 'FATAL',
-				  styles: [ 'bgRed' ],
+				  styles: [ 'red', 'underline' ],
 				  badge: '☢'
 				}
 			}

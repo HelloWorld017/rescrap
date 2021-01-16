@@ -1,3 +1,4 @@
+import chalkTemplates from "chalk/templates";
 import globby from "globby";
 import { merge } from "../utils";
 import path from "path";
@@ -8,7 +9,7 @@ import enUS from "./en_US.yml";
 export default class I18n {
 	constructor(rescrap) {
 		this.rescrap = rescrap;
-		this.localeCode = 'en_US';
+		this.locale = 'en_US';
 		this.fallbackLocale = 'en_US';
 		this.locales = {
 			'en_US': enUS
@@ -17,7 +18,7 @@ export default class I18n {
 
 	async initApplication() {
 		this.setLocale(this.rescrap.config.locale);
-		await loadI18ns();
+		await this.loadI18ns();
 	}
 
 	registerLocale(localeCode, locale) {
@@ -58,11 +59,16 @@ export default class I18n {
 					this.locales[this.fallbackLocale][key] ??
 					key;
 
+				let colored = translation;
+				try {
+					colored = chalkTemplates(chalk, translation);
+				} catch(e) {}
+
 				const interpolated = Object.keys(args).reduce((translation, key) => {
 					return translation
 						.split(`{${key}}`)
-						.join(args[key])
-				}, translation);
+						.join(args[key]);
+				}, colored);
 
 				return interpolated;
 			}
@@ -74,9 +80,9 @@ export default class I18n {
 
 		return (translationKey, ...args) => {
 			if (typeof translationKey === 'string') {
-				if (args.length > 1) {
+				if (args.length > 0) {
 					return [
-						i18n.t(translationKey, args[1]),
+						i18n.t(translationKey, args[0]),
 						...args.slice(1)
 					];
 				}

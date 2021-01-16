@@ -4,8 +4,9 @@ import ModelTerminal,	{ init as terminalInit }	from "./ModelTerminal";
 
 export { ModelFile, ModelUnit, ModelTerminal };
 
-export default function init () {
-	fileInit();
-	unitInit();
-	terminalInit();
+export default async function init (sequelize) {
+	unitInit(sequelize);
+	terminalInit(sequelize);
+	fileInit(sequelize);
+	await sequelize.sync();
 }

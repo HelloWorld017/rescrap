@@ -1,7 +1,11 @@
+import { evaluate } from "../utils";
+import globby from "globby";
+import path from "path";
+
 export default class PluginManager {
 	constructor(rescrap) {
 		this.rescrap = rescrap;
-		this.logger = rescrap.logger;
+		this.logger = rescrap.logger.scope('plugins');
 		this.config = rescrap.config;
 		this.plugins = new Map();
 		this.events = new Map();
@@ -43,13 +47,13 @@ export default class PluginManager {
 		});
 
 		for (const pluginPath of plugins) {
-			await loadPlugin(path.join(this.rescrap.basePath, pluginPath));
+			await this.loadPlugin(path.join(this.rescrap.basePath, pluginPath));
 		}
 	}
 
 	async loadPlugin(pluginPath) {
 		try {
-			const PluginClass = evaluate(pluginPath);
+			const PluginClass = await evaluate(pluginPath, { rescrap: this.rescrap });
 
 			const pluginName = PluginClass.getName();
 			const pluginOption = this.config.plugins[pluginName] ?? {};

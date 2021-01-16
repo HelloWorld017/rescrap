@@ -1,9 +1,11 @@
 {
   "name": "rescrap",
   "version": "1.0.0",
-  "description": "A toolset for writing crawlers",
+  "description": "A crawler toolkit for scheduled crawling",
   "main": "dist/rescrap.bundle.js",
   "scripts": {
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -28,16 +30,21 @@
     "cheerio": "^1.0.0-rc.5",
     "commander": "^7.0.0",
     "date-fns": "^2.16.1",
+    "deepmerge": "^4.2.2",
     "es6-promise-pool": "^2.5.0",
     "globby": "^11.0.2",
     "jimp": "^0.16.1",
+    "pg": "^8.5.1",
+    "pg-hstore": "^2.3.3",
     "sequelize": "^6.3.5",
+    "sqlite3": "^5.0.1",
     "strip-ansi": "^6.0.0",
     "yaml": "^1.10.0"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^17.0.0",
-    "@rollup/plugin-node-resolve": "^11.1.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-yaml": "^3.0.0",
     "rollup": "^2.36.2"
   }
 }

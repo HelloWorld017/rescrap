@@ -21,28 +21,29 @@ export class HandlerFile extends HandlerBase {
         const date = new Date();
         const dest = file
             .replace(/{date}/g, `${Math.floor(date.getTime() / 1000)}`)
-            .replace(/{datestr}/g, formatDate(new Date(), "yyyy-mm-dd kk.mm.ss"));
+            .replace(/{datestr}/g, formatDate(new Date(), "yyyy-MM-dd HH.mm.ss"));
 
-        const logdir = path.dirname(file);
+        const logdir = path.dirname(dest);
         fs.mkdirSync(logdir, { recursive: true });
 
-        this.file = file;
+        this.dest = dest;
+        this.file = null;
         this.writeQueue = null;
     }
 
     buildString(log) {
-        const {tag, scope, content, time} = log;
+        const { tag, scope, content, time } = log;
         const timeString = this.buildTimeString(time);
         const scopeString = this.buildScopeString(scope);
         const contentString = this.buildContentString(tag, content);
 
         return timeString + '  '
             + (scopeString ? scopeString + '  ' : '')
-            + contentString;
+            + contentString + '\n';
     }
 
     buildTimeString(date = new Date()) {
-        return date.toString();
+        return formatDate(date, "yyyy/MM/dd(EE) HH:mm:ss:SS xxx");
     }
 
     buildScopeString(scope) {
@@ -57,18 +58,24 @@ export class HandlerFile extends HandlerBase {
     }
 
     write(log) {
-        const {tag} = log;
+        const { tag } = log;
 
         if (tag.level < this.logLevel)
             return;
 
-        if (!this.writeQueue)
-            this.writeQueue = Promise.resolve();
+        if (!this.writeQueue) {
+            if (this.file === null) {
+                this.writeQueue = fs.promises.open(this.dest, 'a')
+                    .then(handle => this.file = handle);
+            } else {
+                this.writeQueue = Promise.resolve();
+            }
+        }
 
         const logString = this.buildString(log);
 
         this.writeQueue = this.writeQueue
-            .then(() => fs.promises.appendFile(this.file, logString))
+            .then(() => this.file.appendFile(logString))
             .catch()
             .then(() => this.writeQueue = null);
     }
@@ -76,7 +83,7 @@ export class HandlerFile extends HandlerBase {
 
 export class HandlerConsole extends HandlerBase {
     buildString(log) {
-        const {tag, scope, content, time} = log;
+        const { tag, scope, content, time } = log;
         const timeString = this.buildTimeString(time);
         const scopeString = this.buildScopeString(scope);
         const contentString = this.buildContentString(tag, content);
@@ -95,9 +102,7 @@ export class HandlerConsole extends HandlerBase {
 
     buildTimeString(date = new Date()) {
         return chalk.grey(
-            date.getHours().toString().padStart(2, '0') + ':' +
-            date.getMinutes().toString().padStart(2, '0') + ':' +
-            date.getSeconds().toString().padStart(2, '0')
+            formatDate(new Date(), "HH:mm:ss")
         );
     }
 
@@ -105,15 +110,14 @@ export class HandlerConsole extends HandlerBase {
         const colorFunction = tag.styles.reduce((colorFunction, style) => colorFunction[style], chalk);
 
         const tagString = tag.badge
-            ? colorFunction(`  ${tag.badge} ${tag.label}  `)
-            : colorFunction(`  ${tag.label}  `);
+            ? colorFunction(` ${tag.badge} ${tag.label} `)
+            : colorFunction(` ${tag.label} `);
 
         return tagString + '  ' + content;
     }
 
     write(log) {
-        const {tag} = log;
-
+        const { tag } = log;
         if (tag.level < this.logLevel)
             return;
 

@@ -1,5 +1,7 @@
-class ModelTerminal extends Model {}
-export default ModelTerminal;
+import { DataTypes, Model } from "sequelize";
+import ModelUnit from "./ModelUnit";
+
+export default class ModelTerminal extends Model {}
 export function init (sequelize) {
 	ModelTerminal.init({
 		id: {

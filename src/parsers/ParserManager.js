@@ -1,11 +1,13 @@
-import logger as globalLogger from "../logger";
+import { evaluate } from "../utils";
 import globby from "globby";
 import path from "path";
+
+import Fetcher from "../fetch";
 
 export default class ParserManager {
 	constructor(rescrap) {
 		this.config = rescrap.config;
-		this.logger = rescrap.logger;
+		this.logger = rescrap.logger.scope('parsers');
 		this.rescrap = rescrap;
 		this.parsers = new Map();
 	}
@@ -23,18 +25,19 @@ export default class ParserManager {
 		});
 
 		for (const parserPath of parsers) {
-			await loadParser(path.join(this.rescrap.basePath, parserPath));
+			await this.loadParser(path.join(this.rescrap.basePath, parserPath));
 		}
 	}
 
 	async loadParser(parserPath) {
 		try {
-			const ParserClass = evaluate(parserPath);
+			const ParserClass = await evaluate(parserPath, { rescrap: this.rescrap });
 
 			const parserName = ParserClass.getName();
 			const parserOption = this.config.parsers[parserName] ?? {};
 
-			const logger = globalLogger.scope(parserName);
+			const logger = this.rescrap.logger.scope(parserName);
+
 			const fetcher = new Fetcher(
 				this.rescrap,
 				parserOption.fetch,

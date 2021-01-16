@@ -117,7 +117,7 @@ export default class ParserBase extends named() {
 
 	async fetchUnits(...args) {
 		return this.rescrap.pluginManager
-			.execute(this, 'parser/fetchUnits', args, (...args) => {
+			.execute(this, 'parser/fetchUnits', args, async (...args) => {
 				const iteratorOrArray = await this._fetchUnits.bind(this);
 				if (!Array.isArray(iteratorOrArray))
 					return iteratorOrArray;

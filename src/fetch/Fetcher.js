@@ -1,5 +1,5 @@
 import axios from "axios";
-import { axiosRetry, isRetryableError } from "axios-retry";
+import axiosRetry, { isRetryableError } from "axios-retry";
 import fs from "fs";
 import { merge, sleep } from "../utils";
 import mergeConfig from "axios/lib/core/mergeConfig";
@@ -10,12 +10,12 @@ export default class Fetcher {
 
 	constructor(rescrap, options, logger) {
 		this.rescrap = rescrap;
-		this.options = options || { ...rescrap.config.fetch };
+		this.options = options || merge([ {}, { ...rescrap.config.fetch } ]);
 
 		this.globalLogger = logger || rescrap.logger;
 		this.logger = this.globalLogger.scope('fetcher');
 
-		this.downloadPath = options.download.path;
+		this.downloadPath = this.options.download.path;
 		this.stageTargetPath = null;
 
 		this.unit = null;

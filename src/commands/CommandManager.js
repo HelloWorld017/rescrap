@@ -1,14 +1,14 @@
 import { Command } from "commander";
-import package from "../../package.json";
+import rescrap from "../../package.json";
 
 export default class CommandManager {
 	constructor(rescrap) {
 		this.rescrap = rescrap;
-		this.program = program;
+		this.program = new Command();
 		this.commands = new Map();
 
 		this.program
-			.version(package.version);
+			.version(rescrap.version);
 	}
 
 	registerCommand(CommandClass) {
