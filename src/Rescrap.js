@@ -1,8 +1,12 @@
-import commands from "./commands";
-import models, { init as initModels } from "./models";
-import parsers from "./parsers";
-import plugins from "./plugins";
+import * as models,		initModels from "./models";
+import * as commands,	CommandManager from "./commands";
+import * as parsers,	ParserManager from "./parsers";
+import * as plugins,	PluginManager from "./plugins";
 
+import ConfigManager from "./config";
+import Fetcher from "./fetcher";
+import I18n from "./i18n";
+import Logger from "./logger";
 import PromisePool from "es6-promise-pool";
 import { Sequelize } from "sequelize";
 
@@ -12,7 +16,7 @@ class Rescrap {
 	}) {
 		this.basePath = basePath;
 
-		this.loggerManager = new RescrapLogger(this);
+		this.loggerManager = new Logger(this);
 		this.logger = this.loggerManager.createLogger();
 
 		this.configManager = new ConfigManager(this);
@@ -25,6 +29,7 @@ class Rescrap {
 		this.sequelize = new Sequelize(this.config.rescrap.database);
 		initModels(this.sequelize);
 
+		this.fetcher = new Fetcher(this);
 		this.pluginManager = new PluginManager(this);
 		this.parserManager = new ParserManager(this);
 	}
@@ -34,6 +39,7 @@ class Rescrap {
 		await this.i18nManager.initApplication();
 		await this.pluginManager.initApplication();
 		await this.parserManager.initApplication();
+		this.logger.finish.with('i18n')('rescrap-init');
 	}
 
 	findUpdates(parserName, dataItems) {

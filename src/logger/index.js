@@ -1,6 +1,9 @@
 import { Logger, LogLevel } from "./Logger";
 
-export class RescrapLogger extends Logger {
+export * from "./Handler";
+export * from "./Logger";
+
+export default class RescrapLogger extends Logger {
 	getStaticTags() {
 		return Object.assign(
 			super.getStaticTags(),
@@ -43,5 +46,3 @@ export class RescrapLogger extends Logger {
 		);
 	}
 }
-
-export default RescrapLogger;

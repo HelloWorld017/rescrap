@@ -5,7 +5,7 @@ import { merge, sleep } from "../utils";
 import mergeConfig from "axios/lib/core/mergeConfig";
 import util from "util";
 
-class Fetcher {
+export default class Fetcher {
 	static UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
 
 	constructor(rescrap, options, logger) {
@@ -191,5 +191,3 @@ class Fetcher {
 			.execute(this, 'fetcher/commit', args, this._commit.bind(this));
 	}
 }
-
-export default Fetcher;

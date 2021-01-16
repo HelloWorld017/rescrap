@@ -1,4 +1,3 @@
-import ModelUnit from "../models/ModelUnit";
 import { named } from "../utils";
 
 export default class ParserBase extends named() {
@@ -102,7 +101,9 @@ export default class ParserBase extends named() {
 	}
 
 	async getRootUnit() {
-		const [ unit ] = await ModelUnit.findOne({
+		const { ModelUnit } = this.rescrap.models;
+
+		const unit = await ModelUnit.findOne({
 			where: { id: this.name }
 		});
 

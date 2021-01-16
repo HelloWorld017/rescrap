@@ -15,13 +15,32 @@ export default class CommandCron extends Command {
 	async execute(parsers, cmd) {
 		await this.rescrap.initApplication();
 
+		const watchingParsers = Object.keys(this.rescrap.config.watching);
+		const selectedParsers = parsers
+			.reduce(
+				(selected, parser) => {
+					if (parser.startsWith('-')) {
+						if (selected.includes(parser)) {
+							selected.splice(selected.indexOf(parser), 1);
+						}
+					} else {
+						selected.push(parser);
+					}
+
+					return selected;
+				},
+				(parsers[0] || '').startsWith('-') ? watchingParsers.slice() : []
+			);
+		
 		const { finished: updates, errors: updateErrors } = await this._runJob(
+			selectedParsers,
 			'update',
 			(...args) => rescrap.findUpdates(...args),
 			parser => [ rescrap.config.watching[parser] ])
 		);
 
 		const { finished: downloads, errors: downloadErrors } = await this._runJob(
+			selectedParsers,
 			'download',
 			(...args) => rescrap.downloadUpdates(...args),
 			parser => [ updates[parser].flat() ]
@@ -30,8 +49,7 @@ export default class CommandCron extends Command {
 		return { updates, updateErrors, downloads, downloadErrors };
 	}
 
-	_runJob(name, jobFn, argsFn) {
-		const selectedParsers = this._selectedParsers;
+	_runJob(selectedParsers, name, jobFn, argsFn) {
 		const rescrap = this.rescrap;
 		const logger = rescrap.logger;
 		const concurrency = rescrap.config.rescrap.parallelParsers;
@@ -66,27 +84,6 @@ export default class CommandCron extends Command {
 		);
 
 		return { finished, finishedCount, errors };
-	}
-
-	get _selectedParsers() {
-		const watchingParsers = Object.keys(this.rescrap.config.watching);
-		const selectedParsers = parsers
-			.reduce(
-				(selected, parser) => {
-					if (parser.startsWith('-')) {
-						if (selected.includes(parser)) {
-							selected.splice(selected.indexOf(parser), 1);
-						}
-					} else {
-						selected.push(parser);
-					}
-
-					return selected;
-				},
-				(parsers[0] || '').startsWith('-') ? watchingParsers.slice() : []
-			);
-
-		return selectedParsers;
 	}
 
 	static getName() {
