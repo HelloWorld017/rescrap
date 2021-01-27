@@ -90,17 +90,51 @@ export default class ConfigManager {
 	}
 
 	getConfig() {
-		const configManager = this;
-		return new Proxy(
-			{},
-			{
-				get(_, prop) {
-					if (!configManager._config.hasOwnProperty(prop))
-						return undefined;
+		const getOwnProperty = (baseObject, hookPath) => {
+			return hookPath.reduce((previousObject, hookKey) => {
+				if ('hasOwnProperty' in previousObject) {
+					if (previousObject.hasOwnProperty(hookKey)) {
+						return previousObject[hookKey];
+					}
 
-					return configManager._config[prop];
+					return undefined;
 				}
-			}
-		);
+
+				if (hookKey in previousObject) {
+					return previousObject[hookKey];
+				}
+
+				return undefined;
+			}, baseObject);
+		};
+
+		const hookProperty = (baseObject, hookPath) => {
+			return new Proxy(
+				Object.create(null),
+				{
+					get(_, prop) {
+						const propPath = [ ...hookPath, prop ];
+						const targetValue = getOwnProperty(baseObject, propPath);
+
+						if (typeof targetValue === 'object') {
+							return hookProperty(baseObject, propPath);
+						}
+
+						return targetValue;
+					},
+
+					ownKeys() {
+						const hookObject = getOwnProperty(baseObject, hookPath);
+						return Reflect.ownKeys(hookObject);
+					},
+
+					getOwnPropertyDescriptor(_, prop) {
+						return { value: this.get(_, prop), enumerable: true, configurable: true };
+					}
+				}
+			);
+		};
+
+		return hookProperty(this, [ '_config' ]);
 	}
 }

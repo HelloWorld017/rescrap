@@ -6,7 +6,7 @@ import PluginManager,	* as plugins from "./plugins";
 import ConfigManager from "./config";
 import Fetcher from "./fetch";
 import I18n from "./i18n";
-import Logger, { LogLevel, HandlerFile, HandlerConsole } from "./logger";
+import Logger, { LogLevel, HandlerConsole, HandlerFile, HandlerQueue } from "./logger";
 import PromisePool from "es6-promise-pool";
 import { Sequelize } from "sequelize";
 
@@ -17,23 +17,14 @@ class Rescrap {
 	constructor(config = {}) {
 		this.basePath = config.basePath || "./rescrap";
 
+		this.loggerQueue = new HandlerQueue();
 		this.loggerManager = new Logger();
+		this.loggerManager.addHandler(this.loggerQueue);
 		this.logger = this.loggerManager.createLogger();
 
 		this.configManager = new ConfigManager(this);
 		this.configManager.overrideConfig(config);
 		this.config = this.configManager.getConfig();
-
-		if (this.config.logging.console.enabled)
-			this.loggerManager.addHandler(new HandlerConsole(
-				LogLevel[this.config.logging.console.level.toUpperCase()]
-			));
-
-		if (this.config.logging.file.enabled)
-			this.loggerManager.addHandler(new HandlerFile(
-				LogLevel[this.config.logging.file.level.toUpperCase()],
-				this.config.logging.file.dest
-			));
 
 		this.i18nManager = new I18n(this);
 		this.i18n = this.i18nManager.createI18n();
@@ -57,6 +48,21 @@ class Rescrap {
 
 	async initApplication() {
 		await this.configManager.initApplication();
+
+		if (this.config.logging.console.enabled)
+			this.loggerManager.addHandler(new HandlerConsole(
+				LogLevel[this.config.logging.console.level.toUpperCase()]
+			));
+
+		if (this.config.logging.file.enabled)
+			this.loggerManager.addHandler(new HandlerFile(
+				LogLevel[this.config.logging.file.level.toUpperCase()],
+				this.config.logging.file.dest
+			));
+
+		this.loggerQueue.flush(this.loggerManager);
+		this.loggerQueue = null;
+
 		await this.i18nManager.initApplication();
 		await this.pluginManager.initApplication();
 		await this.parserManager.initApplication();

@@ -114,6 +114,13 @@ export class Logger {
 		this.handlers.push(handler);
 	}
 
+	removeHandler(handler) {
+		if (!this.handlers.includes(handler))
+			return;
+		
+		this.handlers.splice(this.handlers.indexOf(handler), 1);
+	}
+
 	createLogger() {
 		const timers = new Map();
 

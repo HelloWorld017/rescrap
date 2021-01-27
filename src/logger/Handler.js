@@ -4,12 +4,21 @@ import fs from "fs";
 import stripAnsi from "strip-ansi";
 import path from "path";
 
+import { LogLevel } from "./Logger";
+
 export class HandlerBase {
     constructor(logLevel) {
         this.logLevel = logLevel;
     }
 
     write(log) {
+        if (log.tag.level < this.logLevel)
+            return;
+
+        this._write(log);
+    }
+
+    _write(log) {
         throw new Error("Unimplemented function!");
     }
 }
@@ -35,11 +44,12 @@ export class HandlerFile extends HandlerBase {
         const { tag, scope, content, time } = log;
         const timeString = this.buildTimeString(time);
         const scopeString = this.buildScopeString(scope);
-        const contentString = this.buildContentString(tag, content);
+        const tagString = this.buildTagString(tag);
+        const contentString = this.buildContentString(content);
 
         return timeString + '  '
             + (scopeString ? scopeString + '  ' : '')
-            + contentString + '\n';
+            + tagString + ' ' + contentString + '\n';
     }
 
     buildTimeString(date = new Date()) {
@@ -53,11 +63,15 @@ export class HandlerFile extends HandlerBase {
         return `[ ${scope.join(' > ')} ]`;
     }
 
-    buildContentString(tag, content) {
-        return `[ ${tag.label} ] ${stripAnsi(content)}`;
+    buildTagString(tag) {
+        return `[ ${tag.label} ]`;
     }
 
-    write(log) {
+    buildContentString(content) {
+        return stripAnsi(content);
+    }
+
+    _write(log) {
         const { tag } = log;
 
         if (tag.level < this.logLevel)
@@ -86,11 +100,12 @@ export class HandlerConsole extends HandlerBase {
         const { tag, scope, content, time } = log;
         const timeString = this.buildTimeString(time);
         const scopeString = this.buildScopeString(scope);
-        const contentString = this.buildContentString(tag, content);
+        const tagString = this.buildTagString(tag);
+        const contentString = this.buildContentString(content);
 
         return timeString + '  ' +
             (scopeString ? scopeString + '  ' : '') +
-            contentString;
+            tagString + ' ' + contentString;
     }
 
     buildScopeString(scope) {
@@ -106,21 +121,50 @@ export class HandlerConsole extends HandlerBase {
         );
     }
 
-    buildContentString(tag, content) {
+    buildTagString(tag) {
         const colorFunction = tag.styles.reduce((colorFunction, style) => colorFunction[style], chalk);
 
         const tagString = tag.badge
             ? colorFunction(` ${tag.badge} ${tag.label} `)
             : colorFunction(` ${tag.label} `);
 
-        return tagString + '  ' + content;
+        return tagString;
     }
 
-    write(log) {
+    buildContentString(content) {
+        if (content.includes('\n')) {
+            return content + '\n';
+        }
+
+        return content;
+    }
+
+    _write(log) {
         const { tag } = log;
         if (tag.level < this.logLevel)
             return;
 
         console.log(this.buildString(log));
+    }
+}
+
+export class HandlerQueue extends HandlerBase {
+    constructor() {
+        super(LogLevel.VERBOSE);
+
+        this.queue = [];
+    }
+
+    _write(log) {
+        this.queue.push(log);
+    }
+
+    flush(loggerManager) {
+        loggerManager.removeHandler(this);
+        loggerManager.handlers.forEach(handler => {
+            this.queue.forEach(log => handler.write(log));
+        });
+
+        this.queue = [];
     }
 }
