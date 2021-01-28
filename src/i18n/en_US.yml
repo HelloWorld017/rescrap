@@ -1,10 +1,18 @@
 "locale": "en_US"
 
 "config-load": "Loaded config: {files}"
+"config-load-failed": "Failed to load config: {file}"
 
 "command-args-safe": "Run in safe mode"
 "command-args-path": "Set configuration directory path. Defaults to ./rescrap"
+"command-args-version": "Output the current version"
 "command-cron-description": "Do a single cron job"
+"command-cron-update-start": "Finding updates"
+"command-cron-update-end": "Finding updates"
+"command-cron-update-finish": "Found {finished} updates, with {errors} errors"
+"command-cron-download-start": "Downloading"
+"command-cron-download-end": "Downloading"
+"command-cron-download-finish": "Downloaded {finished} updates, with {errors} errors"
 
 "fetcher-download-complete": "Downloaded {unitName} > {fileId}"
 "fetcher-download-failed": "Error downloading {unitName} > {fileId}"
@@ -16,3 +24,10 @@
 
 "plugin-load": "Loaded plugin: {pluginName}"
 "plugin-load-failed": "Failed to load plugin: {pluginPath}"
+
+"rescrap-init": "Initialized Rescrap"
+"rescrap-fetch-units": "Fetched {updates} updates from {parserName} / {item}"
+"rescrap-fetch-finish": "Fetched {updates} updates from {parserName}"
+"rescrap-fetch-error": "Failed to fetch {parserName} / {item}"
+"rescrap-download-progress": "Downloaded {parserName} / {unit}"
+"rescrap-download-error": "Error while downloading {parserName} / {unit}"
