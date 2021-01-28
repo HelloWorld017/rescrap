@@ -8,6 +8,8 @@ import Fetcher from "./fetch";
 import I18n from "./i18n";
 import Logger, { LogLevel, HandlerConsole, HandlerFile, HandlerQueue } from "./logger";
 import PromisePool from "es6-promise-pool";
+
+import { ModelUnit } from "./models";
 import { Sequelize } from "sequelize";
 
 import sequelizeLogger from "sequelize/lib/utils/logger";
@@ -66,15 +68,16 @@ class Rescrap {
 		await this.i18nManager.initApplication();
 		await this.pluginManager.initApplication();
 		await this.parserManager.initApplication();
+		await this.commandManager.initApplication();
 		this.logger.finish.with('i18n')('rescrap-init');
 	}
 
-	async findUpdates(parserName, dataItems) {
+	async findUpdates(parserName, dataItems, logger = this.logger.scope('update')) {
 		const parser = this.parserManager.parsers.get(parserName);
 		const updates = [], errors = [];
 
 		const concurrency = parser.options.parallelUnits || this.config.rescrap.parallelUnits;
-		const logger = this.logger.scope('updates');
+		logger = logger.scope(parserName);
 
 		const promiseGenerator = function* () {
 			for (const dataItem of dataItems) {
@@ -87,7 +90,7 @@ class Rescrap {
 
 					let units;
 					while (true) {
-						const { done, value } = unitIterator.next();
+						const { done, value } = await unitIterator.next();
 						if (done) {
 							units = value;
 							break;
@@ -135,7 +138,7 @@ class Rescrap {
 		await pool.start();
 
 		const finishedCount = updates.flat().length;
-		this.logger.progress.with('i18n')(
+		logger.progress.with('i18n')(
 			'rescrap-fetch-finish',
 			{ parserName, updates: finishedCount }
 		);
@@ -143,12 +146,12 @@ class Rescrap {
 		return { finished: updates, finishedCount, errors };
 	}
 
-	async downloadUpdates(parserName, updatedUnits) {
+	async downloadUpdates(parserName, updatedUnits, logger = this.logger.scope('download')) {
 		const parser = this.parserManager.parsers.get(parserName);
 		const downloaded = [], errors = [];
 
 		const concurrency = parser.options.parallelUnits || this.config.rescrap.parallelUnits;
-		const logger = this.logger.scope('download');
+		logger = logger.scope(parserName);
 
 		const promiseGenerator = function* () {
 			for (const unit of updatedUnits) {

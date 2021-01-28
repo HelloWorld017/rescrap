@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import rescrap from "../../package.json";
+import rescrapPkg from "../../package.json";
+import * as commands from "./commands";
 
 export default class CommandManager {
 	constructor(rescrap) {
@@ -8,7 +9,13 @@ export default class CommandManager {
 		this.commands = new Map();
 
 		this.program
-			.version(rescrap.version);
+			.name("rescrap")
+			.version(rescrapPkg.version, '--version', this.rescrap.i18n.t('command-args-version'));
+	}
+
+	async initApplication() {
+		Object.values(commands)
+			.forEach(command => this.registerCommand(command));
 	}
 
 	registerCommand(CommandClass) {

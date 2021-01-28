@@ -1,6 +1,3 @@
-import CommandCron from "./CommandCron";
-
 export { default } from "./CommandManager";
-export const commands = {
-	CommandCron
-};
+export { default as Command } from "./Command";
+export * from "./commands";

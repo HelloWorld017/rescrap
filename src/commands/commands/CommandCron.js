@@ -1,11 +1,9 @@
-import Command from "./Command";
+import Command from "../Command";
+import PromisePool from "es6-promise-pool";
 
 export default class CommandCron extends Command {
 	constructor(rescrap) {
-		super()
-
-		this.rescrap = rescrap;
-		this.description = rescrap.i18n.t('command-cron-description');
+		super(rescrap, rescrap.i18n.t('command-cron-description'));
 	}
 
 	getCommand(program) {
@@ -15,8 +13,6 @@ export default class CommandCron extends Command {
 	}
 
 	async execute(parsers, cmd) {
-		await this.rescrap.initApplication();
-
 		const watchingParsers = Object.keys(this.rescrap.config.watching);
 		const selectedParsers = parsers
 			.reduce(
@@ -37,14 +33,14 @@ export default class CommandCron extends Command {
 		const { finished: updates, errors: updateErrors } = await this._runJob(
 			selectedParsers,
 			'update',
-			(...args) => rescrap.findUpdates(...args),
-			parser => [ rescrap.config.watching[parser] ]
+			(...args) => this.rescrap.findUpdates(...args),
+			parser => [ this.rescrap.config.watching[parser] ]
 		);
 
 		const { finished: downloads, errors: downloadErrors } = await this._runJob(
 			selectedParsers,
 			'download',
-			(...args) => rescrap.downloadUpdates(...args),
+			(...args) => this.rescrap.downloadUpdates(...args),
 			parser => [ updates[parser].flat() ]
 		);
 
@@ -53,7 +49,7 @@ export default class CommandCron extends Command {
 
 	async _runJob(selectedParsers, name, jobFn, argsFn) {
 		const rescrap = this.rescrap;
-		const logger = rescrap.logger;
+		const logger = rescrap.logger.scope(name);
 		const concurrency = rescrap.config.rescrap.parallelParsers;
 
 		let finished = {}, finishedCount = 0, errors = [];
@@ -64,7 +60,7 @@ export default class CommandCron extends Command {
 						finished: parserFinished,
 						finishedCount: parserFinishedCount,
 						errors: parserErrors
-					} = await jobFn(parser, ...argFn(parser));
+					} = await jobFn(parser, ...argsFn(parser), logger);
 
 					finished[parser] = parserFinished;
 					finishedCount += parserFinishedCount;
