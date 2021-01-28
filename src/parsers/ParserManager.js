@@ -1,4 +1,4 @@
-import { evaluate } from "../utils";
+import { evaluate, merge } from "../utils";
 import globby from "globby";
 import path from "path";
 
@@ -7,7 +7,7 @@ import Fetcher from "../fetch";
 export default class ParserManager {
 	constructor(rescrap) {
 		this.config = rescrap.config;
-		this.logger = rescrap.logger.scope('parsers');
+		this.logger = rescrap.logger.scope('parser');
 		this.rescrap = rescrap;
 		this.parsers = new Map();
 	}
@@ -40,7 +40,7 @@ export default class ParserManager {
 
 			const fetcher = new Fetcher(
 				this.rescrap,
-				parserOption.fetch,
+				merge([ this.rescrap.config.fetch, parserOption.fetch ?? {} ]),
 				logger
 			);
 

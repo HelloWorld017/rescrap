@@ -18,7 +18,7 @@ export class HandlerBase {
         this._write(log);
     }
 
-    _write(log) {
+    _write(_log) {
         throw new Error("Unimplemented function!");
     }
 }
@@ -117,7 +117,7 @@ export class HandlerConsole extends HandlerBase {
 
     buildTimeString(date = new Date()) {
         return chalk.grey(
-            formatDate(new Date(), "HH:mm:ss")
+            formatDate(date, "HH:mm:ss")
         );
     }
 

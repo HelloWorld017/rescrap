@@ -1,4 +1,3 @@
-import chalk from "chalk";
 import util from 'util';
 
 export const LogLevel = {
@@ -54,7 +53,7 @@ export class Logger {
 				badge: '×'
 			},
 
-			timeStart: {
+			time: {
 				level: LogLevel.INFO,
 				label: 'START',
 				styles: [ 'green' ],
@@ -117,7 +116,7 @@ export class Logger {
 	removeHandler(handler) {
 		if (!this.handlers.includes(handler))
 			return;
-		
+
 		this.handlers.splice(this.handlers.indexOf(handler), 1);
 	}
 
@@ -125,9 +124,15 @@ export class Logger {
 		const timers = new Map();
 
 		return {
+			...Object.fromEntries(
+				Object.keys(this.tags).map(k => [ k, this.buildModifiedFunction(
+					(...args) => this.log(k, ...args)
+				) ])
+			),
+
 			time: this.buildModifiedFunction((key, ...args) => {
 				timers.set(key, Date.now());
-				this.log('timeStart', ...args);
+				this.log('time', ...args);
 			}, 1),
 
 			timeEnd: this.buildModifiedFunction((key, ...args) => {
@@ -162,13 +167,7 @@ export class Logger {
 				nextLogger.modifiers = this.modifiers;
 
 				return nextLogger.createLogger();
-			},
-
-			...Object.fromEntries(
-				Object.keys(this.tags).map(k => [ k, this.buildModifiedFunction(
-					(...args) => this.log(k, ...args)
-				) ])
-			)
+			}
 		};
 	}
 }

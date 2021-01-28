@@ -41,7 +41,7 @@ export default class Fetcher {
 	}
 
 	async _request(...reqs) {
-		const mergedConfig = req.reduce(
+		const mergedConfig = reqs.reduce(
 			(base, config) => mergeConfig(base, config),
 			{}
 		);
@@ -131,7 +131,7 @@ export default class Fetcher {
 			));
 
 			if (this.options.timeout)
-				promises.push(new Promise((resolve, reject) => {
+				promises.push(new Promise((_, reject) => {
 					setTimeout(() => {
 						reject(
 							new Error(`Request timeout while downloading ${this.unit.name} > ${file.id}`)

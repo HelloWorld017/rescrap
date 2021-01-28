@@ -5,7 +5,7 @@ import path from "path";
 export default class PluginManager {
 	constructor(rescrap) {
 		this.rescrap = rescrap;
-		this.logger = rescrap.logger.scope('plugins');
+		this.logger = rescrap.logger.scope('plugin');
 		this.config = rescrap.config;
 		this.plugins = new Map();
 		this.events = new Map();
@@ -33,7 +33,7 @@ export default class PluginManager {
 			.concat((...[, , args]) => callback(...args));
 
 		const next = i => args =>
-			Promise.resolve(events[i + 1](parser, eventName, args, next(i + 1)));
+			Promise.resolve(events[i](parser, eventName, args, next(i + 1)));
 
 		return next(0)(args);
 	}

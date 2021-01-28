@@ -74,7 +74,7 @@ export default class ConfigManager {
 				const configValue = yaml.parse(configContent);
 				this.overrideConfig(configValue);
 
-				this.files.push(configFile);
+				this.files.push(configName);
 			} catch (err) {
 				this.logger.error.with('i18n')(
 					'config-load-failed',
@@ -90,16 +90,8 @@ export default class ConfigManager {
 	}
 
 	getConfig() {
-		const getOwnProperty = (baseObject, hookPath) => {
+		const getProperty = (baseObject, hookPath) => {
 			return hookPath.reduce((previousObject, hookKey) => {
-				if ('hasOwnProperty' in previousObject) {
-					if (previousObject.hasOwnProperty(hookKey)) {
-						return previousObject[hookKey];
-					}
-
-					return undefined;
-				}
-
 				if (hookKey in previousObject) {
 					return previousObject[hookKey];
 				}
@@ -114,7 +106,7 @@ export default class ConfigManager {
 				{
 					get(_, prop) {
 						const propPath = [ ...hookPath, prop ];
-						const targetValue = getOwnProperty(baseObject, propPath);
+						const targetValue = getProperty(baseObject, propPath);
 
 						if (typeof targetValue === 'object') {
 							return hookProperty(baseObject, propPath);
@@ -124,7 +116,7 @@ export default class ConfigManager {
 					},
 
 					ownKeys() {
-						const hookObject = getOwnProperty(baseObject, hookPath);
+						const hookObject = getProperty(baseObject, hookPath);
 						return Reflect.ownKeys(hookObject);
 					},
 

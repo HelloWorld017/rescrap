@@ -21,7 +21,8 @@ export function init (sequelize) {
 			},
 
 			dest: {
-				type: DataTypes.STRING
+				type: DataTypes.STRING,
+				defaultValue: ''
 			},
 
 			info: {

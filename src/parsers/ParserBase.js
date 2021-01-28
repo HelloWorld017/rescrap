@@ -97,7 +97,13 @@ export default class ParserBase extends named() {
 	}
 
 	async _getFetcherForTerminalUnit(unit) {
-		return this.fetcher.scopeStage(unit);
+		const ancestors = await unit.getAncestors();
+		const fetcher = ancestors.reduce(
+			(fetcher, ancestor) => fetcher.scopeDirect(ancestor),
+			this.fetcher
+		);
+
+		return fetcher.scopeStage(unit);
 	}
 
 	async getRootUnit() {
@@ -118,7 +124,7 @@ export default class ParserBase extends named() {
 	async fetchUnits(...args) {
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/fetchUnits', args, async (...args) => {
-				const iteratorOrArray = await this._fetchUnits.bind(this);
+				const iteratorOrArray = await this._fetchUnits(...args);
 				if (!Array.isArray(iteratorOrArray))
 					return iteratorOrArray;
 
@@ -129,12 +135,6 @@ export default class ParserBase extends named() {
 	async download(unit, globalFetcher) {
 		const terminal = await unit.getTerminal();
 		if (!terminal || terminal.downloaded) return;
-
-		const ancestors = await unit.getAncestors();
-		const fetcher = ancestors.reduce(
-			(fetcher, ancestor) => fetcher.scopeDirect(ancestor),
-			globalFetcher
-		);
 
 		return await this.rescrap.pluginManager
 			.execute(this, 'parser/download', [ unit, globalFetcher ], this._download.bind(this));
