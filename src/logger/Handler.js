@@ -72,11 +72,6 @@ export class HandlerFile extends HandlerBase {
     }
 
     _write(log) {
-        const { tag } = log;
-
-        if (tag.level < this.logLevel)
-            return;
-
         if (!this.writeQueue) {
             if (this.file === null) {
                 this.writeQueue = fs.promises.open(this.dest, 'a')
@@ -140,10 +135,6 @@ export class HandlerConsole extends HandlerBase {
     }
 
     _write(log) {
-        const { tag } = log;
-        if (tag.level < this.logLevel)
-            return;
-
         console.log(this.buildString(log));
     }
 }

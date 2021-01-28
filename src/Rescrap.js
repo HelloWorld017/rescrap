@@ -16,7 +16,7 @@ import sequelizeLogger from "sequelize/lib/utils/logger";
 import sequelizeHierarchy from "@dataee/sequelize-hierarchy";
 
 class Rescrap {
-	constructor(config = {}) {
+	async init(config = {}, application = false) {
 		this.basePath = config.basePath || "./rescrap";
 
 		this.loggerQueue = new HandlerQueue();
@@ -32,12 +32,31 @@ class Rescrap {
 		this.i18n = this.i18nManager.createI18n();
 		this.loggerManager.addModifier('i18n', this.i18nManager.createLoggerModifier());
 
+		if (application) {
+			await this.configManager.initApplication();
+
+			if (this.config.logging.console.enabled)
+				this.loggerManager.addHandler(new HandlerConsole(
+					LogLevel[this.config.logging.console.level.toUpperCase()]
+				));
+
+			if (this.config.logging.file.enabled)
+				this.loggerManager.addHandler(new HandlerFile(
+					LogLevel[this.config.logging.file.level.toUpperCase()],
+					this.config.logging.file.dest
+				));
+
+			this.loggerQueue.flush(this.loggerManager);
+			this.loggerQueue = null;
+		}
+
+		const databaseLogger = this.logger.scope('database');
 		sequelizeHierarchy(Sequelize);
-		sequelizeLogger.logger.warn = (...msg) => this.logger.scope('database').warn(...msg);
+		sequelizeLogger.logger.warn = (...msg) => databaseLogger.warn(...msg);
 
 		this.sequelize = new Sequelize(this.config.rescrap.database, {
 			logging: (...messages) => {
-				this.logger.verbose(...messages.filter(msg => typeof msg === 'string'))
+				databaseLogger.verbose(...messages.filter(msg => typeof msg === 'string'))
 			}
 		});
 		initModels(this.sequelize);
@@ -46,34 +65,20 @@ class Rescrap {
 		this.pluginManager = new PluginManager(this);
 		this.parserManager = new ParserManager(this);
 		this.commandManager = new CommandManager(this);
-	}
 
-	async initApplication() {
-		await this.configManager.initApplication();
-
-		if (this.config.logging.console.enabled)
-			this.loggerManager.addHandler(new HandlerConsole(
-				LogLevel[this.config.logging.console.level.toUpperCase()]
-			));
-
-		if (this.config.logging.file.enabled)
-			this.loggerManager.addHandler(new HandlerFile(
-				LogLevel[this.config.logging.file.level.toUpperCase()],
-				this.config.logging.file.dest
-			));
-
-		this.loggerQueue.flush(this.loggerManager);
-		this.loggerQueue = null;
-
-		await this.i18nManager.initApplication();
-		await this.pluginManager.initApplication();
-		await this.parserManager.initApplication();
-		await this.commandManager.initApplication();
-		this.logger.finish.with('i18n')('rescrap-init');
+		if (application) {
+			await this.i18nManager.initApplication();
+			await this.pluginManager.initApplication();
+			await this.parserManager.initApplication();
+			await this.commandManager.initApplication();
+			this.logger.finish.with('i18n')('rescrap-init');
+		}
 	}
 
 	async findUpdates(parserName, dataItems, logger = this.logger.scope('update')) {
 		const parser = this.parserManager.parsers.get(parserName);
+		await this.parserManager.initParser(parser);
+
 		const updates = [], errors = [];
 
 		const concurrency = parser.options.parallelUnits || this.config.rescrap.parallelUnits;
@@ -148,6 +153,8 @@ class Rescrap {
 
 	async downloadUpdates(parserName, updatedUnits, logger = this.logger.scope('download')) {
 		const parser = this.parserManager.parsers.get(parserName);
+		await this.parserManager.initParser(parser);
+
 		const downloaded = [], errors = [];
 
 		const concurrency = parser.options.parallelUnits || this.config.rescrap.parallelUnits;

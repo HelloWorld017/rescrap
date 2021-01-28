@@ -7,6 +7,7 @@ export default class ParserBase extends named() {
 		this.rescrap = rescrap;
 		this.fetcher = fetcher;
 		this.logger = logger;
+		this.initialized = false;
 		this.implemented = [];
 		this.options = {};
 	}
@@ -46,6 +47,7 @@ export default class ParserBase extends named() {
 		let isRetry = false;
 		let previousFetch = null;
 
+		const files = [];
 		while (true) {
 			const { value: yieldObject } = await iterator.next({ isRetry, previousFetch });
 			if (yieldObject === undefined) {
@@ -56,7 +58,8 @@ export default class ParserBase extends named() {
 
 			try {
 				previousFetch = await fetcher.download(file);
-				await this.postProcess(file);
+				await this.postProcessFile(file);
+				files.push(file);
 
 				retryCount = 0;
 				isRetry = false;
@@ -79,6 +82,8 @@ export default class ParserBase extends named() {
 			}
 		}
 
+		await this.postProcessUnit(unit, files);
+
 		try {
 			await fetcher.commit();
 		} catch(err) {
@@ -96,11 +101,19 @@ export default class ParserBase extends named() {
 
 	}
 
+	async _postProcessUnit(unit, files) {
+
+	}
+
+	async _getFetcher() {
+		return this.fetcher;
+	}
+
 	async _getFetcherForTerminalUnit(unit) {
 		const ancestors = await unit.getAncestors();
 		const fetcher = ancestors.reduce(
 			(fetcher, ancestor) => fetcher.scopeDirect(ancestor),
-			this.fetcher
+			this._getFetcher()
 		);
 
 		return fetcher.scopeStage(unit);
@@ -117,6 +130,8 @@ export default class ParserBase extends named() {
 	}
 
 	async init(...args) {
+		this.initialized = true;
+
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/init', args, this._init.bind(this));
 	}
@@ -132,12 +147,12 @@ export default class ParserBase extends named() {
 			});
 	}
 
-	async download(unit, globalFetcher) {
+	async download(unit) {
 		const terminal = await unit.getTerminal();
 		if (!terminal || terminal.downloaded) return;
 
 		return await this.rescrap.pluginManager
-			.execute(this, 'parser/download', [ unit, globalFetcher ], this._download.bind(this));
+			.execute(this, 'parser/download', [ unit ], this._download.bind(this));
 	}
 
 	async listFileIterator(...args) {
@@ -148,5 +163,10 @@ export default class ParserBase extends named() {
 	async postProcess(...args) {
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/postProcess', args, this._postProcess.bind(this));
+	}
+
+	async postProcessUnit(...args) {
+		return this.rescrap.pluginManager
+			.execute(this, 'parser/postProcessUnit', args, this._postProcessUnit.bind(this));
 	}
 }

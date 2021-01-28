@@ -2,6 +2,7 @@ import { evaluate, merge } from "../utils";
 import globby from "globby";
 import path from "path";
 
+import { ModelUnit } from "../models";
 import Fetcher from "../fetch";
 
 export default class ParserManager {
@@ -14,6 +15,21 @@ export default class ParserManager {
 
 	async initApplication() {
 		await this.loadParsers();
+	}
+
+	async initParser(parser) {
+		if (parser.initialized) return;
+
+		const parserName = parser.name;
+		const parserOption = this.config.parsers[parserName] ?? {};
+
+		await ModelUnit.upsert({
+			key: parserName,
+			name: parserName,
+			dest: parserName
+		});
+
+		await parser.init(parserOption);
 	}
 
 	async loadParsers() {
@@ -34,14 +50,14 @@ export default class ParserManager {
 			const ParserClass = await evaluate(parserPath, { rescrap: this.rescrap });
 
 			const parserName = ParserClass.getName();
-			const parserOption = this.config.parsers[parserName] ?? {};
 
 			const logger = this.rescrap.logger.scope(parserName);
 
+			const fetchOption = this.config.parsers[parserName]?.fetch ?? {};
 			const fetcher = new Fetcher(
 				this.rescrap,
-				merge([ this.rescrap.config.fetch, parserOption.fetch ?? {} ]),
-				logger
+				merge([ this.rescrap.config.fetch, fetchOption ]),
+				{ logger }
 			);
 
 			const parser = new ParserClass(this.rescrap, fetcher, logger);

@@ -5,14 +5,17 @@ import { merge, sleep } from "../utils";
 import mergeConfig from "axios/lib/core/mergeConfig";
 import util from "util";
 
+const fetcherAxios = axios.create();
+axiosRetry(fetcherAxios);
+
 export default class Fetcher {
 	static UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
 
-	constructor(rescrap, options, logger) {
+	constructor(rescrap, options, { logger = rescrap.logger, axios = fetcherAxios } = {}) {
 		this.rescrap = rescrap;
 		this.options = options || merge([ {}, { ...rescrap.config.fetch } ]);
 
-		this.globalLogger = logger || rescrap.logger;
+		this.globalLogger = logger;
 		this.logger = this.globalLogger.scope('fetcher');
 
 		this.downloadPath = this.options.download.path;
@@ -25,10 +28,8 @@ export default class Fetcher {
 				'User-Agent': this.options.request.UserAgent || Fetcher.UserAgent
 			},
 
-			timeout: this.options.timeout
-		});
+			timeout: this.options.timeout,
 
-		axiosRetry(this.axios, {
 			retries: this.options.maxRetry,
 			shouldResetTimeout: true,
 			retryCondition: error => isRetryableError(error) || error.code === 'ECONNABORTED',
@@ -77,7 +78,7 @@ export default class Fetcher {
 			{ download: { path: newPath } }
 		]);
 
-		const newFetcher = new Fetcher(newOptions, newLogger);
+		const newFetcher = new Fetcher(newOptions, { logger: newLogger, axios: this.axios });
 		newFetcher.unit = unit;
 
 		return newFetcher;
