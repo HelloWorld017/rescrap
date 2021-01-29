@@ -2,6 +2,7 @@ import { Logger, LogLevel } from "./Logger";
 
 export * from "./Handler";
 export * from "./Logger";
+export * from "./TypeormLogger";
 
 export default class RescrapLogger extends Logger {
 	getStaticTags() {

@@ -14,6 +14,10 @@
 "command-cron-download-end": "Downloading"
 "command-cron-download-finish": "Downloaded {finished} updates, with {errors} errors"
 
+"database-query": "Query Execution: {query}\n(Parameters: {parameters})"
+"database-query-error": "Error while executing query!\nQuery: {query}\nParameters: {parameters}\nError:"
+"database-query-slow": "Slow Query Execution ({time})!\nQuery: {query}\n(Parameters: {parameters})"
+
 "fetcher-download-complete": "Downloaded {unitName} > {fileId}"
 "fetcher-download-failed": "Error downloading {unitName} > {fileId}"
 

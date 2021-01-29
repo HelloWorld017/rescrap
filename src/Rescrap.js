@@ -1,4 +1,4 @@
-import initModels,		* as models from "./models";
+import initDatabase,	* as models from "./models";
 import CommandManager,	* as commands from "./commands";
 import ParserManager,	* as parsers from "./parsers";
 import PluginManager,	* as plugins from "./plugins";
@@ -10,10 +10,6 @@ import Logger, { LogLevel, HandlerConsole, HandlerFile, HandlerQueue } from "./l
 import PromisePool from "es6-promise-pool";
 
 import { ModelUnit } from "./models";
-import { Sequelize } from "sequelize";
-
-import sequelizeLogger from "sequelize/lib/utils/logger";
-import sequelizeHierarchy from "@dataee/sequelize-hierarchy";
 
 class Rescrap {
 	async init(config = {}, application = false) {
@@ -51,15 +47,7 @@ class Rescrap {
 		}
 
 		const databaseLogger = this.logger.scope('database');
-		sequelizeHierarchy(Sequelize);
-		sequelizeLogger.logger.warn = (...msg) => databaseLogger.warn(...msg);
-
-		this.sequelize = new Sequelize(this.config.rescrap.database, {
-			logging: (...messages) => {
-				databaseLogger.verbose(...messages.filter(msg => typeof msg === 'string'))
-			}
-		});
-		initModels(this.sequelize);
+		this.database = await initDatabase(this.config.rescrap.database, databaseLogger);
 
 		this.fetcher = new Fetcher(this);
 		this.pluginManager = new PluginManager(this);

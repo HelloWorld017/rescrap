@@ -1,29 +1,46 @@
-import { DataTypes, Model } from "sequelize";
-import ModelTerminal from "./ModelTerminal";
+import { EntitySchema } from "typeorm";
 
-export default class ModelFile extends Model {}
-export function init (sequelize) {
-	ModelFile.init({
+export default class ModelFile {
+	constructor({ id, dest, order, info, terminal } = {}) {
+		this.id = id;
+		this.dest = dest;
+		this.order = order;
+		this.info = info;
+		this.terminal = terminal;
+	}
+}
+
+export const EntityFile = new EntitySchema({
+	name: "File",
+	target: ModelFile,
+	columns: {
 		id: {
-			type: DataTypes.INTEGER,
-			autoIncrement: true,
-			primaryKey: true
+			type: "int",
+			generated: "increment",
+			primary: true
 		},
 
 		dest: {
-			type: DataTypes.STRING,
-			allowNull: false,
-			unique: true
+			type: "varchar",
+			length: 1023,
+			unique: true,
+			nullable: false
 		},
 
 		order: {
-			type: DataTypes.INTEGER
+			type: "int",
+			nullable: false
 		},
 
 		info: {
-			type: DataTypes.JSON
+			type: "simple-json"
 		}
-	}, { sequelize, modelName: 'File' });
-	ModelTerminal.hasMany(ModelFile);
-	ModelFile.belongsTo(ModelTerminal);
-}
+	},
+
+	relations: {
+		terminal: {
+			target: "Terminal",
+			type: "many-to-one"
+		}
+	}
+});

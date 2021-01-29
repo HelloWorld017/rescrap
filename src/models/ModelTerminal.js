@@ -1,20 +1,24 @@
-import { DataTypes, Model } from "sequelize";
-import ModelUnit from "./ModelUnit";
+import { EntitySchema } from "typeorm";
 
-export default class ModelTerminal extends Model {}
-export function init (sequelize) {
-	ModelTerminal.init({
+export default class ModelTerminal {
+	constructor({ id, downloaded } = {}) {
+		this.id = id;
+		this.downloaded = downloaded;
+	}
+}
+
+export const EntityTerminal = new EntitySchema({
+	name: "Terminal",
+	target: ModelTerminal,
+	columns: {
 		id: {
-			type: DataTypes.INTEGER,
-			autoIncrement: true,
-			primaryKey: true
+			type: "int",
+			generated: "increment",
+			primary: true
 		},
 
 		downloaded: {
-			type: DataTypes.BOOLEAN
+			type: "boolean"
 		}
-	}, { sequelize, modelName: 'Terminal' });
-
-	ModelUnit.hasOne(ModelTerminal);
-	ModelTerminal.belongsTo(ModelUnit);
-}
+	}
+});

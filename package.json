@@ -22,7 +22,6 @@
   },
   "homepage": "https://github.com/HelloWorld017/rescrap#readme",
   "dependencies": {
-    "@dataee/sequelize-hierarchy": "^2.0.5",
     "axios": "^0.21.1",
     "axios-cookiejar-support": "^1.0.1",
     "axios-retry": "^3.1.9",
@@ -36,9 +35,9 @@
     "jimp": "^0.16.1",
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
-    "sequelize": "^6.3.5",
     "sqlite3": "^5.0.1",
     "strip-ansi": "^6.0.0",
+    "typeorm": "^0.2.30",
     "yaml": "^1.10.0"
   },
   "devDependencies": {
