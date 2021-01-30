@@ -9,4 +9,15 @@ export default async function init (sequelize) {
 	terminalInit(sequelize);
 	fileInit(sequelize);
 	await sequelize.sync();
+
+	return ModelUnit.findOrCreate({
+		where: {
+			key: 'root',
+			parentId: null
+		},
+
+		defaults: {
+			name: '<root>'
+		}
+	});
 }

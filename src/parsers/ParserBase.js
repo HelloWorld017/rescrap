@@ -123,7 +123,7 @@ export default class ParserBase extends named() {
 		const { ModelUnit } = this.rescrap.models;
 
 		const unit = await ModelUnit.findOne({
-			where: { id: this.name }
+			where: { key: this.name, parentId: this.rescrap.rootUnit.id }
 		});
 
 		return unit;

@@ -26,7 +26,8 @@ export default class ParserManager {
 		await ModelUnit.upsert({
 			key: parserName,
 			name: parserName,
-			dest: parserName
+			dest: parserName,
+			parentId: this.rescrap.rootUnit.id
 		});
 
 		await parser.init(parserOption);

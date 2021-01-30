@@ -1,6 +1,34 @@
-import { DataTypes, Model, Op } from "sequelize";
+import { DataTypes, Model, QueryTypes } from "sequelize";
 
-export default class ModelUnit extends Model {}
+export default class ModelUnit extends Model {
+	getChildren() {
+
+	}
+
+	async getAncestors({
+		fields = [ 'id', 'key', 'name', 'parentId', 'dest' ]
+	} = {}) {
+		const id = this.id;
+		const tableName = this.constructor.getTableName();
+		const fieldsStr = fields.join(', ');
+		const parentFieldsStr = fields.map(v => `Parent.${v}`).join(', ');
+
+		return this.sequelize.query(`
+			WITH RECURSIVE unitTree AS (
+				SELECT ${fieldsStr}, 1 level FROM ${tableName} WHERE id = ${id}
+				UNION ALL
+				SELECT ${parentFieldsStr}, level + 1 FROM ${tableName} AS Parent
+				JOIN unitTree ON Parent.id = unitTree.parentId
+			)
+			SELECT ${fieldsStr} FROM unitTree ORDER BY level
+		`, {
+			model: this.constructor,
+			mapToModel: true,
+			type: QueryTypes.SELECT
+		});
+	}
+}
+
 export function init (sequelize) {
 	ModelUnit.init(
 		{
@@ -20,6 +48,10 @@ export function init (sequelize) {
 				allowNull: false
 			},
 
+			parentId: {
+				type: DataTypes.INTEGER
+			},
+
 			dest: {
 				type: DataTypes.STRING,
 				defaultValue: ''
@@ -30,22 +62,16 @@ export function init (sequelize) {
 			}
 		},
 		{
-			hierarchy: true,
 			indexes: [
 				{
 					unique: true,
-					fields: [ 'key', 'hierarchyLevel' ],
-					where: { hierarchyLevel: 1 }
-				},
-
-				{
-					unique: true,
-					fields: [ 'key', 'parentId' ],
-					where: { hierarchyLevel: { [ Op.gt ] : 1 } }
+					fields: [ 'key', 'parentId' ]
 				}
 			],
 			modelName: 'Unit',
 			sequelize
 		}
 	);
+
+	ModelUnit.hasOne(ModelUnit, { as: 'Parent', foreignKey: 'parentId' });
 }

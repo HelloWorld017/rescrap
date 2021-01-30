@@ -13,7 +13,6 @@ import { ModelUnit } from "./models";
 import { Sequelize } from "sequelize";
 
 import sequelizeLogger from "sequelize/lib/utils/logger";
-import sequelizeHierarchy from "@dataee/sequelize-hierarchy";
 
 class Rescrap {
 	async init(config = {}, application = false) {
@@ -51,7 +50,6 @@ class Rescrap {
 		}
 
 		const databaseLogger = this.logger.scope('database');
-		sequelizeHierarchy(Sequelize);
 		sequelizeLogger.logger.warn = (...msg) => databaseLogger.warn(...msg);
 
 		this.sequelize = new Sequelize(this.config.rescrap.database, {
@@ -59,7 +57,7 @@ class Rescrap {
 				databaseLogger.verbose(...messages.filter(msg => typeof msg === 'string'))
 			}
 		});
-		initModels(this.sequelize);
+		this.rootUnit = await initModels(this.sequelize);
 
 		this.fetcher = new Fetcher(this);
 		this.pluginManager = new PluginManager(this);

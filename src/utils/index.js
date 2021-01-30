@@ -79,6 +79,7 @@ export function merge(items, arrayMerge = false) {
 	})
 }
 
+export * from "./axios";
 export * from "./db";
 export * from "./filesystem";
 export * from "./promise";
