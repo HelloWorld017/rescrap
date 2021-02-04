@@ -1,8 +1,20 @@
 import axios from "axios";
 import axiosRetry, { isRetryableError } from "axios-retry";
-import { copyAxiosInterceptors, merge, mergeAxios, sleep } from "../utils";
+import crypto from "crypto";
 import fs from "fs";
+import path from "path";
+import { pipeline } from "stream/promises";
+import sanitizeFilename from "sanitize-filename";
 import util from "util";
+
+import {
+	copyAxiosInterceptors,
+	isPromise,
+	isReadableStream,
+	merge,
+	mergeAxios,
+	sleep
+} from "../utils";
 
 const fetcherAxios = axios.create();
 axiosRetry(fetcherAxios);
@@ -43,8 +55,11 @@ export default class Fetcher {
 		this.axios.interceptors = copyAxiosInterceptors(globalAxios);
 	}
 
-	async $(uri, req) {
-		return await this.request({ uri }, req);
+	async $(url, req) {
+		return await this.request({
+			...req,
+			url
+		});
 	}
 
 	async _request(...reqs) {
@@ -81,7 +96,7 @@ export default class Fetcher {
 			{ download: { path: newPath } }
 		]);
 
-		const newFetcher = new Fetcher(newOptions, { logger: newLogger, axios: this.axios });
+		const newFetcher = new Fetcher(this.rescrap, newOptions, { logger: newLogger, axios: this.axios });
 		newFetcher.unit = unit;
 
 		return newFetcher;
@@ -109,9 +124,41 @@ export default class Fetcher {
 		return scopedFetcher.ensureDest();
 	}
 
-	async _download(req, file, retry = 0) {
+	async _download(downloadable, file) {
 		if(!this.unit)
 			throw new Error("Fetcher not scoped!");
+
+		file.dest = sanitizeFilename(file.dest);
+
+		let downloaded;
+		try {
+			if (isPromise(Promise)) {
+				downloaded = await downloadable;
+			} else if (isReadableStream(downloadable)) {
+				downloaded = await this._downloadStream(downloadable, file);
+			} else {
+				downloaded = await this._downloadRequest(downloadable, file);
+			}
+
+			await file.save();
+			this.logger.verbose.with('i18n')(
+				'fetcher-download-complete',
+				{ unitName: this.unit.name, fileId: file.id }
+			);
+		} catch (err) {
+			this.logger.verboseWarn.with('i18n')(
+				'fetcher-download-failed',
+				{ unitName: this.unit.name, fileId: file.id }
+			);
+
+			throw err;
+		}
+
+		return downloaded;
+	}
+
+	async _downloadRequest(req, file, retry = 0) {
+		await sleep(this.options.download.delay);
 
 		const request = {
 			...req,
@@ -128,8 +175,7 @@ export default class Fetcher {
 			retry += (retryCount || 0);
 
 			const promises = [];
-
-			promises.push(promisePipe(
+			promises.push(pipeline(
 				destStream,
 				fs.createWriteStream(path.join(this.downloadPath, file.dest))
 			));
@@ -144,13 +190,7 @@ export default class Fetcher {
 				}));
 
 			await Promise.race(promises);
-			await file.save();
-
-			this.logger.verbose.with('i18n')(
-				'fetcher-download-complete',
-				{ unitName: this.unit.name, fileId: file.id }
-			);
-		} catch(err) {
+		} catch (err) {
 			if (destStream) {
 				try {
 					destStream.end();
@@ -164,16 +204,29 @@ export default class Fetcher {
 				throw err;
 			}
 
-			this.logger.verboseWarn.with('i18n')(
-				'fetcher-download-failed',
-				{ unitName: this.unit.name, fileId: file.id },
-				err
-			);
-			await this.download(req, file, retry);
+			return this._downloadRequest(req, file, retry);
 		}
 
-		await sleep(this.options.download.delay);
 		return { request, response };
+	}
+
+	async _downloadStream(destStream, file) {
+		try {
+			await pipeline(
+				destStream,
+				fs.createWriteStream(path.join(this.downloadPath, file.dest))
+			);
+		} catch (err) {
+			if (destStream) {
+				try {
+					destStream.end();
+				} catch {}
+			}
+
+			throw err;
+		}
+
+		return {};
 	}
 
 	async download(...args) {

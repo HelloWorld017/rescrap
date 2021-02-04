@@ -79,6 +79,31 @@ export function merge(items, arrayMerge = false) {
 	})
 }
 
+export function isPromise (possiblyPromise) {
+	if (!possiblyPromise) return false;
+	if (typeof possiblyPromise.then !== 'function') return false;
+
+	return true;
+}
+
+export function isStream (possiblyStream) {
+	if (possiblyStream === null) return false;
+	if (typeof possiblyStream !== 'object') return false;
+	if (typeof possiblyStream.pipe !== 'function') return false;
+
+	return true;
+}
+
+export function isReadableStream (possiblyStream) {
+	if (!isStream(possiblyStream)) return false;
+	
+	if (possiblyStream.readable === false) return false;
+	if (typeof possiblyStream._read !== 'function') return false;
+	if (typeof possiblyStream._readableState !== 'object') return false;
+
+	return true;
+}
+
 export * from "./axios";
 export * from "./db";
 export * from "./filesystem";

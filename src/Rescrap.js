@@ -2,6 +2,7 @@ import initModels,		* as models from "./models";
 import CommandManager,	* as commands from "./commands";
 import ParserManager,	* as parsers from "./parsers";
 import PluginManager,	* as plugins from "./plugins";
+import * as utils from "./utils";
 
 import ConfigManager from "./config";
 import Fetcher from "./fetch";
@@ -13,6 +14,7 @@ import { ModelUnit } from "./models";
 import { Sequelize } from "sequelize";
 
 import sequelizeLogger from "sequelize/lib/utils/logger";
+import { upsertAndReturn } from "./utils";
 
 class Rescrap {
 	async init(config = {}, application = false) {
@@ -82,6 +84,7 @@ class Rescrap {
 		const concurrency = parser.options.parallelUnits || this.config.rescrap.parallelUnits;
 		logger = logger.scope(parserName);
 
+		const rescrap = this;
 		const promiseGenerator = function* () {
 			for (const dataItem of dataItems) {
 				const itemName = typeof dataItem === 'object' ?
@@ -92,28 +95,32 @@ class Rescrap {
 					const unitIterator = await parser.fetchUnits(dataItem);
 
 					let units;
+					let upsertedUnit;
 					while (true) {
-						const { done, value } = await unitIterator.next();
+						const { done, value } = await unitIterator.next(upsertedUnit);
 						if (done) {
 							units = value;
 							break;
 						}
 
-						await ModelUnit.upsert(value);
+						upsertedUnit = await upsertAndReturn(ModelUnit, value);
 					}
 
 					const updatesPerItem = [];
 					for (const unit of units) {
-						const unitUpdated = await ModelUnit.upsert(unit, { returning: true });
+						const transaction = await rescrap.sequelize.transaction();
+						const unitUpdated = await upsertAndReturn(ModelUnit, unit, { transaction });
+
 						let terminal = await unitUpdated.getTerminal();
 						if (terminal?.downloaded)
 							continue;
 
 						if (!terminal) {
-							await unitUpdated.createTerminal({ downloaded: false });
+							await unitUpdated.createTerminal({ downloaded: false }, { transaction });
 						}
 
-						updatesPerItem.push(unit);
+						updatesPerItem.push(unitUpdated);
+						await transaction.commit();
 					}
 
 					logger.verbose.with('i18n')(
@@ -203,7 +210,8 @@ Rescrap.extend({
 	commands,
 	models,
 	parsers,
-	plugins
+	plugins,
+	utils
 });
 
 export default Rescrap;

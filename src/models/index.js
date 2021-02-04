@@ -10,7 +10,7 @@ export default async function init (sequelize) {
 	fileInit(sequelize);
 	await sequelize.sync();
 
-	return ModelUnit.findOrCreate({
+	const [ rootUnit ] = await ModelUnit.findOrCreate({
 		where: {
 			key: 'root',
 			parentId: null
@@ -20,4 +20,6 @@ export default async function init (sequelize) {
 			name: '<root>'
 		}
 	});
+
+	return rootUnit;
 }

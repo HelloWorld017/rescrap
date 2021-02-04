@@ -21,18 +21,18 @@ export default class ParserBase extends named() {
 		return [];
 	}
 
-	// Should return array of files (ModelFiles[]).
+	// Should return array of { file: ModelFile, req: AxiosConfiguration | Promise | ReadableStream }.
 	// Can be overriden if custom listFileIterator is set
 	async _listFile(unit) {
 		return [];
 	}
 
-	// Should yield { file: ModelFile , ignoreError: bool }
+	// Should yield { file: ModelFile, req: AxiosConfiguration | Promise | ReadableStream, ignoreError: bool }
 	async *_listFileIterator(unit) {
-		const files = await this.listFile(unit);
+		const files = await this._listFile(unit);
 
 		for (let i = 0; i < files.length; i++) {
-			const result = yield { file: files[i] };
+			const result = yield files[i];
 
 			if (result.isRetry)
 				i--;
@@ -54,12 +54,13 @@ export default class ParserBase extends named() {
 				break;
 			}
 
-			const { file, ignoreError } = yieldObject;
+			const { req, file, ignoreError } = yieldObject;
+			const fileModel = this.rescrap.models.ModelFile.build(file);
 
 			try {
-				previousFetch = await fetcher.download(file);
-				await this.postProcessFile(file);
-				files.push(file);
+				previousFetch = await fetcher.download(req, fileModel);
+				await this.postProcessFile(fileModel);
+				files.push(fileModel);
 
 				retryCount = 0;
 				isRetry = false;
@@ -111,26 +112,23 @@ export default class ParserBase extends named() {
 
 	async _getFetcherForTerminalUnit(unit) {
 		const ancestors = await unit.getAncestors();
-		const fetcher = ancestors.reduce(
-			(fetcher, ancestor) => fetcher.scopeDirect(ancestor),
-			this._getFetcher()
+		const fetcher = await ancestors.reduce(
+			(fetcherPromise, ancestor) => fetcherPromise.then(fetcher => fetcher.scopeDirect(ancestor)),
+			Promise.resolve(this._getFetcher())
 		);
 
 		return fetcher.scopeStage(unit);
 	}
 
-	async getRootUnit() {
+	async init(...args) {
+		this.initialized = true;
 		const { ModelUnit } = this.rescrap.models;
 
 		const unit = await ModelUnit.findOne({
 			where: { key: this.name, parentId: this.rescrap.rootUnit.id }
 		});
 
-		return unit;
-	}
-
-	async init(...args) {
-		this.initialized = true;
+		this.root = unit;
 
 		return this.rescrap.pluginManager
 			.execute(this, 'parser/init', args, this._init.bind(this));
