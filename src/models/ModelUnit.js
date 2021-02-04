@@ -20,7 +20,7 @@ export default class ModelUnit extends Model {
 				SELECT ${parentFieldsStr}, level + 1 FROM ${tableName} AS Parent
 				JOIN unitTree ON Parent.id = unitTree.parentId
 			)
-			SELECT ${fieldsStr} FROM unitTree ORDER BY level
+			SELECT ${fieldsStr} FROM unitTree ORDER BY level(DESC)
 		`, {
 			model: this.constructor,
 			mapToModel: true,

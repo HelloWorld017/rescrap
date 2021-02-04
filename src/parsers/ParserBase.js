@@ -12,24 +12,24 @@ export default class ParserBase extends named() {
 		this.options = {};
 	}
 
-	async _init(options) {
+	async _init(options, context) {
 		this.options = options;
 	}
 
 	// Should yield parent units and return all children units
-	async *_fetchUnits(dataItem) {
+	async *_fetchUnits(dataItem, context) {
 		return [];
 	}
 
 	// Should return array of { file: ModelFile, req: AxiosConfiguration | Promise | ReadableStream }.
 	// Can be overriden if custom listFileIterator is set
-	async _listFile(unit) {
+	async _listFile(unit, context) {
 		return [];
 	}
 
 	// Should yield { file: ModelFile, req: AxiosConfiguration | Promise | ReadableStream, ignoreError: bool }
-	async *_listFileIterator(unit) {
-		const files = await this._listFile(unit);
+	async *_listFileIterator(unit, context) {
+		const files = await this._listFile(unit, context);
 
 		for (let i = 0; i < files.length; i++) {
 			const result = yield files[i];
@@ -39,9 +39,9 @@ export default class ParserBase extends named() {
 		}
 	}
 
-	async _download(unit) {
-		const iterator = await this.listFileIterator(unit);
-		const fetcher = await this._getFetcherForTerminalUnit(unit);
+	async _download(unit, context) {
+		const { fetcher } = context;
+		const iterator = await this.listFileIterator(unit, context);
 
 		let retryCount = 0;
 		let isRetry = false;
@@ -59,7 +59,7 @@ export default class ParserBase extends named() {
 
 			try {
 				previousFetch = await fetcher.download(req, fileModel);
-				await this.postProcessFile(fileModel);
+				await this.postProcessFile(unit, fileModel, context);
 				files.push(fileModel);
 
 				retryCount = 0;
@@ -83,7 +83,7 @@ export default class ParserBase extends named() {
 			}
 		}
 
-		await this.postProcessUnit(unit, files);
+		await this.postProcessUnit(unit, files, context);
 
 		try {
 			await fetcher.commit();
@@ -98,11 +98,11 @@ export default class ParserBase extends named() {
 		await terminal.save();
 	}
 
-	async _postProcess(file) {
+	async _postProcess(file, context) {
 
 	}
 
-	async _postProcessUnit(unit, files) {
+	async _postProcessUnit(unit, files, context) {
 
 	}
 
@@ -110,8 +110,9 @@ export default class ParserBase extends named() {
 		return this.fetcher;
 	}
 
-	async _getFetcherForTerminalUnit(unit) {
+	async _getFetcherForUnit(unit) {
 		const ancestors = await unit.getAncestors();
+
 		const fetcher = await ancestors.reduce(
 			(fetcherPromise, ancestor) => fetcherPromise.then(fetcher => fetcher.scopeDirect(ancestor)),
 			Promise.resolve(this._getFetcher())
@@ -120,7 +121,17 @@ export default class ParserBase extends named() {
 		return fetcher.scopeStage(unit);
 	}
 
-	async init(...args) {
+	async _getContext(unit = null) {
+		const fetcher = unit ?
+			await this._getFetcher() :
+			await this._getFetcherForUnit(unit);
+
+		const logger = fetcher.globalLogger;
+
+		return { fetcher, logger };
+	}
+
+	async init(options, context) {
 		this.initialized = true;
 		const { ModelUnit } = this.rescrap.models;
 
@@ -130,41 +141,73 @@ export default class ParserBase extends named() {
 
 		this.root = unit;
 
-		return this.rescrap.pluginManager
-			.execute(this, 'parser/init', args, this._init.bind(this));
+		return this.rescrap.pluginManager.execute(
+			this,
+			'parser/init',
+			[ options, context ?? await this.getContext() ],
+			this._init.bind(this)
+		);
 	}
 
-	async fetchUnits(...args) {
-		return this.rescrap.pluginManager
-			.execute(this, 'parser/fetchUnits', args, async (...args) => {
+	async fetchUnits(dataItems, context) {
+		return this.rescrap.pluginManager.execute(
+			this,
+			'parser/fetchUnits',
+			[ dataItems, context ?? await this.getContext() ],
+			async (...args) => {
 				const iteratorOrArray = await this._fetchUnits(...args);
 				if (!Array.isArray(iteratorOrArray))
 					return iteratorOrArray;
 
 				return (async function* () { return iteratorOrArray })();
-			});
+			}
+		);
 	}
 
-	async download(unit) {
+	async listFileIterator(unit, context) {
+		return this.rescrap.pluginManager.execute(
+			this,
+			'parser/listFileIterator',
+			[ unit, context ?? await this.getContext(unit) ],
+			this._listFileIterator.bind(this)
+		);
+	}
+
+	async download(unit, context) {
+		const [ unit ] = args;
+		if (!unit) return;
+
 		const terminal = await unit.getTerminal();
 		if (!terminal || terminal.downloaded) return;
 
-		return await this.rescrap.pluginManager
-			.execute(this, 'parser/download', [ unit ], this._download.bind(this));
+		return this.rescrap.pluginManager.execute(
+			this,
+			'parser/download',
+			[ unit, context ?? await this.getContext(unit) ],
+			this._download.bind(this)
+		);
 	}
 
-	async listFileIterator(...args) {
-		return this.rescrap.pluginManager
-			.execute(this, 'parser/listFileIterator', args, this._listFileIterator.bind(this));
+	async postProcess(unit, file, context) {
+		return this.rescrap.pluginManager.execute(
+			this,
+			'parser/postProcess',
+			[ unit, file, context ?? await this.getContext(unit) ],
+			this._postProcess.bind(this)
+		);
 	}
 
-	async postProcess(...args) {
-		return this.rescrap.pluginManager
-			.execute(this, 'parser/postProcess', args, this._postProcess.bind(this));
+	async postProcessUnit(unit, files, context) {
+		return this.rescrap.pluginManager.execute(
+			this,
+			'parser/postProcessUnit',
+			[ unit, files, context ?? await this.getContext(unit) ],
+			this._postProcessUnit.bind(this)
+		);
 	}
 
-	async postProcessUnit(...args) {
+	async getContext(...args) {
 		return this.rescrap.pluginManager
-			.execute(this, 'parser/postProcessUnit', args, this._postProcessUnit.bind(this));
+			.execute(this, 'parser/getContext', args, this._getContext.bind(this));
 	}
 }
