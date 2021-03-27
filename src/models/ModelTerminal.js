@@ -15,6 +15,7 @@ export function init (sequelize) {
 		}
 	}, { sequelize, modelName: 'Terminal' });
 
-	ModelUnit.hasOne(ModelTerminal);
-	ModelTerminal.belongsTo(ModelUnit);
+	ModelUnit.hasOne(ModelTerminal, { foreignKey: 'unitId' });
+	ModelTerminal.belongsTo(ModelUnit, { foreignKey: 'unitId' });
+	// ModelTerminal.belongsTo(ModelRun);
 }

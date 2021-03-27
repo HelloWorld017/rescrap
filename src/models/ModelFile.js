@@ -1,3 +1,5 @@
+import sanitizeFilename from "sanitize-filename";
+
 import { DataTypes, Model } from "sequelize";
 import ModelTerminal from "./ModelTerminal";
 
@@ -12,8 +14,7 @@ export function init (sequelize) {
 
 		dest: {
 			type: DataTypes.STRING,
-			allowNull: false,
-			unique: true
+			allowNull: false
 		},
 
 		order: {
@@ -23,7 +24,22 @@ export function init (sequelize) {
 		info: {
 			type: DataTypes.JSON
 		}
-	}, { sequelize, modelName: 'File' });
-	ModelTerminal.hasMany(ModelFile);
-	ModelFile.belongsTo(ModelTerminal);
+	}, {
+		sequelize,
+		indexes: [
+			{
+				unique: true,
+				fields: [ 'dest', 'terminalId' ]
+			}
+		],
+		hooks: {
+			beforeValidate(file, options) {
+				file.dest = sanitizeFilename(file.dest);
+			}
+		},
+		modelName: 'File'
+	});
+
+	ModelTerminal.hasMany(ModelFile, { foreignKey: 'terminalId' });
+	ModelFile.belongsTo(ModelTerminal, { foreignKey: 'terminalId' });
 }

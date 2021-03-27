@@ -1,3 +1,5 @@
+import sanitizeFilename from "sanitize-filename";
+
 import { DataTypes, Model, QueryTypes } from "sequelize";
 
 export default class ModelUnit extends Model {
@@ -20,7 +22,7 @@ export default class ModelUnit extends Model {
 				SELECT ${parentFieldsStr}, level + 1 FROM ${tableName} AS Parent
 				JOIN unitTree ON Parent.id = unitTree.parentId
 			)
-			SELECT ${fieldsStr} FROM unitTree ORDER BY level(DESC)
+			SELECT ${fieldsStr} FROM unitTree ORDER BY level DESC
 		`, {
 			model: this.constructor,
 			mapToModel: true,
@@ -68,6 +70,11 @@ export function init (sequelize) {
 					fields: [ 'key', 'parentId' ]
 				}
 			],
+			hooks: {
+				beforeValidate(unit, options) {
+					unit.dest = sanitizeFilename(unit.dest);
+				}
+			},
 			modelName: 'Unit',
 			sequelize
 		}

@@ -111,6 +111,9 @@ export default class Fetcher {
 	}
 
 	async scopeStage(unit, options = {}) {
+		if (!unit.dest)
+			return this.scopeDirect(unit, options);
+
 		const destMd5 = crypto.createHash('md5').update(unit.dest).digest('hex');
 		const stagePath = path.join(this.downloadPath, '.stagings', `.staging__${destMd5}`);
 
@@ -140,15 +143,15 @@ export default class Fetcher {
 				downloaded = await this._downloadRequest(downloadable, file);
 			}
 
-			await file.save();
 			this.logger.verbose.with('i18n')(
 				'fetcher-download-complete',
-				{ unitName: this.unit.name, fileId: file.id }
+				{ unitName: this.unit.name, fileId: file.order }
 			);
 		} catch (err) {
 			this.logger.verboseWarn.with('i18n')(
 				'fetcher-download-failed',
-				{ unitName: this.unit.name, fileId: file.id }
+				{ unitName: this.unit.name, fileId: file.order },
+				err
 			);
 
 			throw err;

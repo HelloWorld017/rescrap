@@ -1,10 +1,11 @@
 import { named } from "../utils";
 
 export default class ParserBase extends named() {
-	constructor(rescrap, fetcher, logger) {
+	constructor(rescrap, root, fetcher, logger) {
 		super();
 
 		this.rescrap = rescrap;
+		this.root = root;
 		this.fetcher = fetcher;
 		this.logger = logger;
 		this.initialized = false;
@@ -34,14 +35,16 @@ export default class ParserBase extends named() {
 		for (let i = 0; i < files.length; i++) {
 			const result = yield files[i];
 
-			if (result.isRetry)
+			if (result.isRetry) {
 				i--;
+			}
 		}
 	}
 
 	async _download(unit, context) {
 		const { fetcher } = context;
 		const iterator = await this.listFileIterator(unit, context);
+		const terminal = await unit.getTerminal();
 
 		let retryCount = 0;
 		let isRetry = false;
@@ -56,10 +59,12 @@ export default class ParserBase extends named() {
 
 			const { req, file, ignoreError } = yieldObject;
 			const fileModel = this.rescrap.models.ModelFile.build(file);
+			fileModel.terminalId = terminal.id;
 
 			try {
 				previousFetch = await fetcher.download(req, fileModel);
-				await this.postProcessFile(unit, fileModel, context);
+				await this.postProcess(unit, fileModel, context);
+				await fileModel.save();
 				files.push(fileModel);
 
 				retryCount = 0;
@@ -92,9 +97,7 @@ export default class ParserBase extends named() {
 			throw err;
 		}
 
-		const terminal = await unit.getTerminal();
 		terminal.downloaded = true;
-
 		await terminal.save();
 	}
 
@@ -113,18 +116,20 @@ export default class ParserBase extends named() {
 	async _getFetcherForUnit(unit) {
 		const ancestors = await unit.getAncestors();
 
-		const fetcher = await ancestors.reduce(
-			(fetcherPromise, ancestor) => fetcherPromise.then(fetcher => fetcher.scopeDirect(ancestor)),
-			Promise.resolve(this._getFetcher())
-		);
+		const fetcher = await ancestors
+			.slice(2, ancestors.length - 1)
+			.reduce(
+				(fetcherPromise, ancestor) => fetcherPromise.then(fetcher => fetcher.scopeDirect(ancestor)),
+				Promise.resolve(this._getFetcher())
+			);
 
 		return fetcher.scopeStage(unit);
 	}
 
 	async _getContext(unit = null) {
 		const fetcher = unit ?
-			await this._getFetcher() :
-			await this._getFetcherForUnit(unit);
+			await this._getFetcherForUnit(unit) :
+			await this._getFetcher();
 
 		const logger = fetcher.globalLogger;
 
@@ -133,13 +138,6 @@ export default class ParserBase extends named() {
 
 	async init(options, context) {
 		this.initialized = true;
-		const { ModelUnit } = this.rescrap.models;
-
-		const unit = await ModelUnit.findOne({
-			where: { key: this.name, parentId: this.rescrap.rootUnit.id }
-		});
-
-		this.root = unit;
 
 		return this.rescrap.pluginManager.execute(
 			this,
@@ -174,7 +172,6 @@ export default class ParserBase extends named() {
 	}
 
 	async download(unit, context) {
-		const [ unit ] = args;
 		if (!unit) return;
 
 		const terminal = await unit.getTerminal();
