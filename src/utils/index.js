@@ -1,3 +1,5 @@
+import base32 from "base32";
+import crypto from "crypto";
 import deepmerge from "deepmerge";
 import fs from "fs";
 import path from "path";
@@ -96,12 +98,21 @@ export function isStream (possiblyStream) {
 
 export function isReadableStream (possiblyStream) {
 	if (!isStream(possiblyStream)) return false;
-	
+
 	if (possiblyStream.readable === false) return false;
 	if (typeof possiblyStream._read !== 'function') return false;
 	if (typeof possiblyStream._readableState !== 'object') return false;
 
 	return true;
+}
+
+export function hash (string, size = 6) {
+	const buffer = crypto
+		.createHash('sha256')
+		.update(string)
+		.digest();
+
+	return base32.encode(buffer).slice(0, size);
 }
 
 export * from "./axios";

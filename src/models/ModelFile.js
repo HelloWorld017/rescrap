@@ -7,7 +7,7 @@ export default class ModelFile extends Model {}
 export function init (sequelize) {
 	ModelFile.init({
 		id: {
-			type: DataTypes.INTEGER,
+			type: DataTypes.INTEGER.UNSIGNED,
 			autoIncrement: true,
 			primaryKey: true
 		},
@@ -18,7 +18,7 @@ export function init (sequelize) {
 		},
 
 		order: {
-			type: DataTypes.INTEGER
+			type: DataTypes.INTEGER.UNSIGNED
 		},
 
 		info: {

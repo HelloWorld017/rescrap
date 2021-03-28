@@ -28,7 +28,7 @@ export default class PluginManager {
 		this.events.get(eventName).push(callback);
 	}
 
-	async execute(parser, eventName, args, callback) {
+	async execute(parser, eventName, args, callback = () => {}) {
 		const events = (this.events.get(eventName) || [])
 			.concat((...[, , args]) => callback(...args));
 

@@ -35,7 +35,7 @@ export function init (sequelize) {
 	ModelUnit.init(
 		{
 			id: {
-				type: DataTypes.INTEGER,
+				type: DataTypes.INTEGER.UNSIGNED,
 				autoIncrement: true,
 				primaryKey: true
 			},
@@ -48,10 +48,6 @@ export function init (sequelize) {
 			name: {
 				type: DataTypes.STRING,
 				allowNull: false
-			},
-
-			parentId: {
-				type: DataTypes.INTEGER
 			},
 
 			dest: {

@@ -1,11 +1,12 @@
 import { DataTypes, Model } from "sequelize";
 import ModelUnit from "./ModelUnit";
+import ModelRun from "./ModelRun";
 
 export default class ModelTerminal extends Model {}
 export function init (sequelize) {
 	ModelTerminal.init({
 		id: {
-			type: DataTypes.INTEGER,
+			type: DataTypes.INTEGER.UNSIGNED,
 			autoIncrement: true,
 			primaryKey: true
 		},
@@ -17,5 +18,7 @@ export function init (sequelize) {
 
 	ModelUnit.hasOne(ModelTerminal, { foreignKey: 'unitId' });
 	ModelTerminal.belongsTo(ModelUnit, { foreignKey: 'unitId' });
-	// ModelTerminal.belongsTo(ModelRun);
+
+	ModelRun.hasMany(ModelTerminal, { foreignKey: 'runId' });
+	ModelTerminal.belongsTo(ModelRun, { foreignKey: 'runId' });
 }

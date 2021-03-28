@@ -10,7 +10,7 @@ import I18n from "./i18n";
 import Logger, { LogLevel, HandlerConsole, HandlerFile, HandlerQueue } from "./logger";
 import PromisePool from "es6-promise-pool";
 
-import { ModelUnit } from "./models";
+import { ModelUnit, ModelRun } from "./models";
 import { Sequelize } from "sequelize";
 
 import sequelizeLogger from "sequelize/lib/utils/logger";
@@ -73,9 +73,23 @@ class Rescrap {
 			await this.commandManager.initApplication();
 			this.logger.finish.with('i18n')('rescrap-init');
 		}
+
+		this.currentRun = null;
+	}
+
+	async startRun() {
+		this.currentRun = await ModelRun.create({ });
+	}
+
+	async finishRun() {
+		this.currentRun.finish = new Date();
+		await this.currentRun.save();
 	}
 
 	async findUpdates(parserName, dataItems, logger = this.logger.scope('update')) {
+		if (!this.currentRun)
+			throw new Error("No runs are in progress");
+
 		const parser = this.parserManager.parsers.get(parserName);
 		await this.parserManager.initParser(parser);
 
@@ -157,6 +171,9 @@ class Rescrap {
 	}
 
 	async downloadUpdates(parserName, updatedUnits, logger = this.logger.scope('download')) {
+		if (!this.currentRun)
+			throw new Error("No runs are in progress");
+
 		const parser = this.parserManager.parsers.get(parserName);
 		await this.parserManager.initParser(parser);
 

@@ -97,6 +97,7 @@ export default class ParserBase extends named() {
 			throw err;
 		}
 
+		terminal.runId = this.rescrap.currentRun.id;
 		terminal.downloaded = true;
 		await terminal.save();
 	}
