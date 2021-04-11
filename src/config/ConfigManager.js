@@ -36,7 +36,7 @@ export const DefaultConfig = {
 		}
 	},
 	rescrap: {
-		database: 'sqlite::memory:'
+		database: 'sqlite:./rescrap/rescrap.db'
 	},
 	debug: {
 		debugMode: false,
