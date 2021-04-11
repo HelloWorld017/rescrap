@@ -20,5 +20,4 @@ export function init (sequelize) {
 	ModelTerminal.belongsTo(ModelUnit, { foreignKey: 'unitId' });
 
 	ModelRun.hasMany(ModelTerminal, { foreignKey: 'runId' });
-	ModelTerminal.belongsTo(ModelRun, { foreignKey: 'runId' });
 }

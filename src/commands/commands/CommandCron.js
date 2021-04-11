@@ -30,6 +30,8 @@ export default class CommandCron extends Command {
 				(parsers[0] || '').startsWith('-') ? watchingParsers.slice() : []
 			);
 
+		await this.rescrap.startRun();
+
 		const { finished: updates, errors: updateErrors } = await this._runJob(
 			selectedParsers,
 			'update',
@@ -43,6 +45,8 @@ export default class CommandCron extends Command {
 			(...args) => this.rescrap.downloadUpdates(...args),
 			parser => [ updates[parser].flat() ]
 		);
+
+		await this.rescrap.finishRun();
 
 		return { updates, updateErrors, downloads, downloadErrors };
 	}
