@@ -20,8 +20,6 @@ const fetcherAxios = axios.create();
 axiosRetry(fetcherAxios);
 
 export default class Fetcher {
-	static UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
-
 	constructor(rescrap, options, {
 		logger: globalLogger = rescrap.logger,
 		axios: globalAxios = fetcherAxios
@@ -41,7 +39,7 @@ export default class Fetcher {
 			globalAxios.defaults,
 			{
 				headers: {
-					'User-Agent': this.options.request.UserAgent || Fetcher.UserAgent
+					'User-Agent': this.options.request.UserAgent || rescrap.defaultUserAgent
 				},
 
 				timeout: this.options.timeout,

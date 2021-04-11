@@ -1,3 +1,4 @@
+import axios from "axios";
 import base32 from "base32";
 import crypto from "crypto";
 import deepmerge from "deepmerge";
@@ -107,12 +108,33 @@ export function isReadableStream (possiblyStream) {
 }
 
 export function hash (string, size = 6) {
+	if (typeof string !== 'string')
+		string = `${string}`;
+
 	const buffer = crypto
 		.createHash('sha256')
 		.update(string)
 		.digest();
 
 	return base32.encode(buffer).slice(0, size);
+}
+
+export async function getLatestUserAgent () {
+	try {
+		const { data: userAgents } =
+			await axios.get("https://jnrbsn.github.io/user-agents/user-agents.json");
+
+		if (
+			(!Array.isArray(userAgents)) ||
+			(userAgents.length < 1) ||
+			(typeof userAgents[0] !== 'string')
+		)
+			throw new Error("Invalid UserAgent Return!");
+
+		return userAgents[0];
+	} catch(err) {}
+
+	return null;
 }
 
 export * from "./axios";

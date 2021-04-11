@@ -26,6 +26,7 @@
 "plugin-load-failed": "Failed to load plugin: {pluginPath}"
 
 "rescrap-init": "Initialized Rescrap"
+"rescrap-useragent-fetch-failed": "Failed to fetch latest User-Agent!"
 "rescrap-fetch-units": "Fetched {updates} updates from {parserName} / {item}"
 "rescrap-fetch-finish": "Fetched {updates} updates from {parserName}"
 "rescrap-fetch-error": "Failed to fetch {parserName} / {item}"

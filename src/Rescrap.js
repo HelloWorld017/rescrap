@@ -14,25 +14,29 @@ import { ModelUnit, ModelRun } from "./models";
 import { Sequelize } from "sequelize";
 
 import sequelizeLogger from "sequelize/lib/utils/logger";
-import { upsertAndReturn } from "./utils";
+import { getLatestUserAgent, upsertAndReturn } from "./utils";
 
 class Rescrap {
 	async init(config = {}, application = false) {
 		this.basePath = config.basePath || "./rescrap";
 
+		// Create default logger
 		this.loggerQueue = new HandlerQueue();
 		this.loggerManager = new Logger();
 		this.loggerManager.addHandler(this.loggerQueue);
 		this.logger = this.loggerManager.createLogger();
 
+		// Create config manager
 		this.configManager = new ConfigManager(this);
 		this.configManager.overrideConfig(config);
 		this.config = this.configManager.getConfig();
 
+		// Create i18n manager
 		this.i18nManager = new I18n(this);
 		this.i18n = this.i18nManager.createI18n();
 		this.loggerManager.addModifier('i18n', this.i18nManager.createLoggerModifier());
 
+		// Setup config and loggers
 		if (application) {
 			await this.configManager.initApplication();
 
@@ -51,6 +55,7 @@ class Rescrap {
 			this.loggerQueue = null;
 		}
 
+		// Setup database
 		const databaseLogger = this.logger.scope('database');
 		sequelizeLogger.logger.warn = (...msg) => databaseLogger.warn(...msg);
 
@@ -61,11 +66,15 @@ class Rescrap {
 		});
 		this.rootUnit = await initModels(this.sequelize);
 
+		// Create other components
+		await this.fetchDefaultConstants();
+
 		this.fetcher = new Fetcher(this);
 		this.pluginManager = new PluginManager(this);
 		this.parserManager = new ParserManager(this);
 		this.commandManager = new CommandManager(this);
 
+		// Setup other components
 		if (application) {
 			await this.i18nManager.initApplication();
 			await this.pluginManager.initApplication();
@@ -75,6 +84,17 @@ class Rescrap {
 		}
 
 		this.currentRun = null;
+	}
+
+	async fetchDefaultConstants () {
+		// Fetch User-Agent
+		const fetchedUserAgent = await getLatestUserAgent();
+		if (!fetchedUserAgent)
+			this.logger.warn.with('i18n')('rescrap-useragent-fetch-failed');
+
+		this.defaultUserAgent =
+			fetchedUserAgent ||
+			'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0) Gecko/20100101 Firefox/87.0';
 	}
 
 	async startRun() {
@@ -106,8 +126,10 @@ class Rescrap {
 					`${dataItem}`;
 
 				const promise = (async () => {
+					// Fetch units
 					const unitIterator = await parser.fetchUnits(dataItem);
 
+					// Make unit models
 					let units;
 					let upsertedUnit;
 					while (true) {
@@ -120,6 +142,7 @@ class Rescrap {
 						upsertedUnit = await upsertAndReturn(ModelUnit, value);
 					}
 
+					// Make terminal unit models
 					const updatesPerItem = [];
 					for (const unit of units) {
 						const transaction = await rescrap.sequelize.transaction();
@@ -137,6 +160,7 @@ class Rescrap {
 						await transaction.commit();
 					}
 
+					// Finish
 					logger.verbose.with('i18n')(
 						'rescrap-fetch-units',
 						{ parserName, item: itemName, updates: updatesPerItem.length }
