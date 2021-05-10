@@ -139,14 +139,14 @@ class Rescrap {
 							break;
 						}
 
-						upsertedUnit = await upsertAndReturn(ModelUnit, value);
+						upsertedUnit = await upsertAndReturn(rescrap, ModelUnit, value);
 					}
 
 					// Make terminal unit models
 					const updatesPerItem = [];
 					for (const unit of units) {
 						const transaction = await rescrap.sequelize.transaction();
-						const unitUpdated = await upsertAndReturn(ModelUnit, unit, { transaction });
+						const unitUpdated = await upsertAndReturn(rescrap, ModelUnit, unit, { transaction });
 
 						let terminal = await unitUpdated.getTerminal();
 						if (terminal?.downloaded)

@@ -29,6 +29,10 @@ export default class ModelUnit extends Model {
 			type: QueryTypes.SELECT
 		});
 	}
+
+	static getUpsertKeys() {
+		return [ 'key', 'parentId' ];
+	}
 }
 
 export function init (sequelize) {

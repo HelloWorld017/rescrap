@@ -1,4 +1,4 @@
-import { evaluate, merge } from "../utils";
+import { evaluate, merge, upsertAndReturn } from "../utils";
 import globby from "globby";
 import path from "path";
 
@@ -44,7 +44,7 @@ export default class ParserManager {
 			const ParserClass = await evaluate(parserPath, { rescrap: this.rescrap });
 
 			const parserName = ParserClass.getName();
-			const [ rootUnit ] = await ModelUnit.upsert({
+			const rootUnit = await upsertAndReturn(this.rescrap, ModelUnit, {
 				key: parserName,
 				name: parserName,
 				dest: parserName,

@@ -38,8 +38,8 @@
     "pg": "^8.5.1",
     "pg-hstore": "^2.3.3",
     "sanitize-filename": "^1.6.3",
-    "sequelize": "^6.5.0",
-    "sqlite3": "^5.0.1",
+    "sequelize": "^6.6.2",
+    "sqlite3": "^5.0.2",
     "strip-ansi": "^6.0.0",
     "yaml": "^1.10.0"
   },
