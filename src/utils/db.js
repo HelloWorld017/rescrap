@@ -1,7 +1,11 @@
 export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 	if (ModelClass.getUpsertKeys) {
 		// FIXME as sequelize sqlite does not work well with the returning upsert
-		const transaction = option.transaction || rescrap.sequelize.transaction();
+		const needToCreateTransaction = !option.transaction;
+		const transaction = needToCreateTransaction ?
+			await rescrap.sequelize.transaction() :
+			option.transaction;
+
 		const where = {};
 		const upsertOptions = {...option, transaction};
 
@@ -14,12 +18,20 @@ export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 		}, upsertOptions);
 
 		if (!foundModel) {
-			return ModelClass.create(value, upsertOptions);
-		} else {
-			await foundModel.update(value, upsertOptions);
-			return foundModel;
+			const createdModel = ModelClass.create(value, upsertOptions);
+			if (needToCreateTransaction)
+				await transaction.commit();
+
+			return createdModel;
 		}
+
+		await foundModel.update(value, upsertOptions);
+		if (needToCreateTransaction)
+			await transaction.commit();
+
+		return foundModel;
 	}
+	
 	const [ upsertedValue ] = await ModelClass.upsert(value, { ...option, returning: true });
 	return upsertedValue;
 }

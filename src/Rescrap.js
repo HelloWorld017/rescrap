@@ -149,8 +149,10 @@ class Rescrap {
 						const unitUpdated = await upsertAndReturn(rescrap, ModelUnit, unit, { transaction });
 
 						let terminal = await unitUpdated.getTerminal();
-						if (terminal?.downloaded)
+						if (terminal?.downloaded) {
+							await transaction.commit();
 							continue;
+						}
 
 						if (!terminal) {
 							await unitUpdated.createTerminal({ downloaded: false }, { transaction });
