@@ -18,7 +18,7 @@ export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 		}, upsertOptions);
 
 		if (!foundModel) {
-			const createdModel = ModelClass.create(value, upsertOptions);
+			const createdModel = await ModelClass.create(value, upsertOptions);
 			if (needToCreateTransaction)
 				await transaction.commit();
 
