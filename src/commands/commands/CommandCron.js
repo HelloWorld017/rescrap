@@ -17,9 +17,11 @@ export default class CommandCron extends Command {
 		const selectedParsers = parsers
 			.reduce(
 				(selected, parser) => {
-					if (parser.startsWith('-')) {
-						if (selected.includes(parser)) {
-							selected.splice(selected.indexOf(parser), 1);
+					if (parser.startsWith('~')) {
+						const excludingParser = parser.slice(1);
+
+						if (selected.includes(excludingParser)) {
+							selected.splice(selected.indexOf(excludingParser), 1);
 						}
 					} else {
 						selected.push(parser);
@@ -27,7 +29,7 @@ export default class CommandCron extends Command {
 
 					return selected;
 				},
-				(parsers[0] || '').startsWith('-') ? watchingParsers.slice() : []
+				!parsers.length || parsers[0].startsWith('~') ? watchingParsers.slice() : []
 			);
 
 		await this.rescrap.startRun();
