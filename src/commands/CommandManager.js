@@ -26,8 +26,9 @@ export default class CommandManager {
 
 		command
 			.getCommand(program)
-			.action((...args) => {
-				command.execute(...args);
+			.action(async (...args) => {
+				await command.execute(...args);
+				await this.rescrap.destroy();
 			});
 
 		this.commands.set(command.name, command);

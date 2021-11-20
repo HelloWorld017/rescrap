@@ -21,6 +21,8 @@ export class HandlerBase {
     _write(_log) {
         throw new Error("Unimplemented function!");
     }
+
+    async destroy() {}
 }
 
 export class HandlerFile extends HandlerBase {
@@ -87,6 +89,10 @@ export class HandlerFile extends HandlerBase {
             .then(() => this.file.appendFile(logString))
             .catch()
             .then(() => this.writeQueue = null);
+    }
+
+    async destroy() {
+        await this.file.close();
     }
 }
 

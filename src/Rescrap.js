@@ -86,6 +86,10 @@ class Rescrap {
 		this.currentRun = null;
 	}
 
+	async destroy() {
+		await this.loggerManager.destroy();
+	}
+
 	async fetchDefaultConstants () {
 		// Fetch User-Agent
 		const fetchedUserAgent = await getLatestUserAgent();

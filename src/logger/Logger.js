@@ -170,4 +170,8 @@ export class Logger {
 			}
 		};
 	}
+
+	destroy() {
+		return Promise.all(this.handlers.map(handler => handler.destroy()));
+	}
 }
