@@ -39,5 +39,7 @@
 "rescrap-fetch-error": "Failed to fetch {parserName} / {item}"
 "rescrap-download-progress": "Downloaded {parserName} / {unit}"
 "rescrap-download-error": "Error while downloading {parserName} / {unit}"
+"rescrap-unit-has-unsupported-key": "Given unit key {unitKey} is not a string! This is unsupported and will make an error."
+"rescrap-unit-upsert-error": "Failed to upsert some units!"
 
 "mixin-check-image-failed": "The fetched file is not an image!"

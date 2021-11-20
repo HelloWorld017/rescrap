@@ -146,6 +146,20 @@ class Rescrap {
 					let upsertedUnit;
 					while (true) {
 						const { done, value } = await unitIterator.next(upsertedUnit);
+						const hasUnsupportedKey = Array.isArray(value)
+							? value.some(valueItem => typeof valueItem.key !== 'string')
+							: typeof value.key !== 'string';
+
+						if (hasUnsupportedKey) {
+							const unitKey = JSON.stringify(
+								Array.isArray(value)
+									? value.find(valueItem => typeof valueItem.key !== 'string').key
+									: value.key !== 'string'
+							);
+
+							logger.warn.with('i18n')('rescrap-unit-has-unsupported-key', { unitKey });
+						}
+
 						if (done) {
 							units = value;
 							break;
@@ -165,9 +179,15 @@ class Rescrap {
 
 					const updatedUnits = [];
 					for (const unitsChunked of chunkArray(units, 20)) {
-						 updatedUnits.push(
-							 ...(await bulkUpsertAndReturn(rescrap, ModelUnit, unitsChunked, { transaction }))
-						 );
+						const upsertedUnits =
+							await bulkUpsertAndReturn(rescrap, ModelUnit, unitsChunked, { transaction });
+
+						const sanitizedUnits = upsertedUnits.filter(value => value !== undefined);
+						if (sanitizedUnits.length !== upsertedUnits.length) {
+							logger.warn.with('i18n')('rescrap-unit-upsert-error');
+						}
+
+						 updatedUnits.push(...sanitizedUnits);
 					}
 					const updatedUnitIds = updatedUnits.map(unit => unit.id);
 

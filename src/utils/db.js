@@ -81,7 +81,10 @@ export async function bulkUpsertAndReturn(rescrap, ModelClass, values, option = 
 
 		const outputMap = new Map();
 
-		const getUpsertKeyTuple = model => upsertKeys.map(key => JSON.stringify(String(model[key]))).join(',');
+		const getUpsertKeyTuple = model => JSON.stringify(
+			upsertKeys.map(key => String(model[key]))
+		);
+
 		output.forEach(model => {
 			const upsertKey = getUpsertKeyTuple(model);
 			outputMap.set(upsertKey, model);
