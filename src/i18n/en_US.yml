@@ -32,3 +32,5 @@
 "rescrap-fetch-error": "Failed to fetch {parserName} / {item}"
 "rescrap-download-progress": "Downloaded {parserName} / {unit}"
 "rescrap-download-error": "Error while downloading {parserName} / {unit}"
+
+"mixin-check-image-failed": "The fetched file is not an image!"

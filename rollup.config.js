@@ -24,6 +24,6 @@ export default {
 		if (code === 'UNRESOLVED_IMPORT' && /treating it as an external dependency/i.test(message))
 			return;
 
-		console.error(warn.toString())
+		console.error(message);
 	}
 };

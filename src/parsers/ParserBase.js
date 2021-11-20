@@ -13,9 +13,7 @@ export default class ParserBase extends named() {
 		this.options = {};
 	}
 
-	async _init(options, context) {
-		this.options = options;
-	}
+	async _init(options, context) {}
 
 	// Should yield parent units and return all children units
 	async *_fetchUnits(dataItem, context) {
@@ -102,7 +100,7 @@ export default class ParserBase extends named() {
 		await terminal.save();
 	}
 
-	async _postProcess(file, context) {
+	async _postProcess(unit, file, context) {
 
 	}
 
@@ -139,6 +137,7 @@ export default class ParserBase extends named() {
 
 	async init(options, context) {
 		this.initialized = true;
+		this.options = options;
 
 		return this.rescrap.pluginManager.execute(
 			this,
