@@ -13,6 +13,13 @@
 "command-cron-download-start": "Downloading"
 "command-cron-download-end": "Downloading"
 "command-cron-download-finish": "Downloaded {finished} updates, with {errors} errors"
+"command-debug-fetch-unit-description": "Debug unit fetching of parser"
+"command-debug-fetch-unit-init-start": "Initializing parser"
+"command-debug-fetch-unit-init-end": "Initialized parser"
+"command-debug-fetch-unit-run-start": "Running fetchUnit()"
+"command-debug-fetch-unit-created": "fetchUnit() yielded an unit"
+"command-debug-fetch-unit-finished": "fetchUnit() returned {unitCount} units"
+"command-debug-fetch-unit-run-end": "Successfully finished fetchUnit()"
 
 "fetcher-download-complete": "Downloaded {unitName} > {fileId}"
 "fetcher-download-failed": "Error downloading {unitName} > {fileId}"
