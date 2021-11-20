@@ -10,11 +10,11 @@ import I18n from "./i18n";
 import Logger, { LogLevel, HandlerConsole, HandlerFile, HandlerQueue } from "./logger";
 import PromisePool from "es6-promise-pool";
 
-import { ModelUnit, ModelRun } from "./models";
-import { Sequelize } from "sequelize";
+import { ModelUnit, ModelRun, ModelTerminal } from "./models";
+import { Sequelize, Op } from "sequelize";
 
 import sequelizeLogger from "sequelize/lib/utils/logger";
-import { getLatestUserAgent, upsertAndReturn } from "./utils";
+import { bulkUpsertAndReturn, chunkArray, getLatestUserAgent, upsertAndReturn } from "./utils";
 
 class Rescrap {
 	async init(config = {}, application = false) {
@@ -125,6 +125,7 @@ class Rescrap {
 					dataItem.name :
 					`${dataItem}`;
 
+				let transaction;
 				const promise = (async () => {
 					// Skip by IdentifierTag
 					if (parser.implemented.includes('needsUpdate')) {
@@ -136,7 +137,7 @@ class Rescrap {
 							);
 						}
 					}
-					
+
 					// Fetch units
 					const unitIterator = await parser.fetchUnits(dataItem);
 
@@ -150,28 +151,53 @@ class Rescrap {
 							break;
 						}
 
-						upsertedUnit = await upsertAndReturn(rescrap, ModelUnit, value);
+						if (Array.isArray(value)) {
+							for (const unitsChunked of chunkArray(value, 20)) {
+								upsertedUnit = await bulkUpsertAndReturn(rescrap, ModelUnit, unitsChunked);
+							}
+						} else {
+							upsertedUnit = await upsertAndReturn(rescrap, ModelUnit, value);
+						}
 					}
 
 					// Make terminal unit models
-					const updatesPerItem = [];
-					for (const unit of units) {
-						const transaction = await rescrap.sequelize.transaction();
-						const unitUpdated = await upsertAndReturn(rescrap, ModelUnit, unit, { transaction });
+					transaction = await rescrap.sequelize.transaction();
 
-						let terminal = await unitUpdated.getTerminal();
-						if (terminal?.downloaded) {
-							await transaction.commit();
-							continue;
-						}
-
-						if (!terminal) {
-							await unitUpdated.createTerminal({ downloaded: false }, { transaction });
-						}
-
-						updatesPerItem.push(unitUpdated);
-						await transaction.commit();
+					const updatedUnits = [];
+					for (const unitsChunked of chunkArray(units, 20)) {
+						 updatedUnits.push(
+							 ...(await bulkUpsertAndReturn(rescrap, ModelUnit, unitsChunked, { transaction }))
+						 );
 					}
+					const updatedUnitIds = updatedUnits.map(unit => unit.id);
+
+					const terminals = await ModelTerminal.findAll({
+						where: {
+							unitId: {
+								[ Op.in ]: updatedUnitIds
+							}
+						},
+						transaction
+					});
+					const terminalByUnitIds = new Map();
+					terminals.forEach(terminal => terminalByUnitIds.set(terminal.unitId, terminal));
+
+					const unitsWithoutTerminal = updatedUnits.filter(unit => !terminalByUnitIds.get(unit.id));
+					await ModelTerminal.bulkCreate(
+						unitsWithoutTerminal.map(unit => ({
+							unitId: unit.id,
+							downloaded: false
+						})),
+						{ transaction }
+					);
+
+					await transaction.commit();
+					transaction = null;
+
+					const updatesPerItem = updatedUnits.filter(unit => {
+						const terminal = terminalByUnitIds.get(unit.id);
+						return !terminal?.downloaded;
+					});
 
 					// Finish
 					logger.verbose.with('i18n')(
@@ -181,7 +207,13 @@ class Rescrap {
 
 					updates.push(updatesPerItem);
 
-				})().catch(err => {
+				})().catch(async err => {
+					if (transaction) {
+						try {
+							await transaction.rollback();
+						} catch {}
+					}
+
 					logger.error.with('i18n')(
 						'rescrap-fetch-error',
 						{ parserName, item: itemName },

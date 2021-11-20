@@ -1,3 +1,5 @@
+import { Op } from "sequelize";
+
 export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 	if (ModelClass.getUpsertKeys) {
 		// FIXME as sequelize sqlite does not work well with the returning upsert
@@ -31,7 +33,65 @@ export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 
 		return foundModel;
 	}
-	
+
 	const [ upsertedValue ] = await ModelClass.upsert(value, { ...option, returning: true });
 	return upsertedValue;
+}
+
+export async function bulkUpsertAndReturn(rescrap, ModelClass, values, option = {}) {
+	if (ModelClass.getUpsertKeys) {
+		const needToCreateTransaction = !option.transaction;
+		const transaction = needToCreateTransaction ?
+			await rescrap.sequelize.transaction() :
+			option.transaction;
+
+		const upsertOptions = { ...option, transaction };
+		const upsertKeys = ModelClass.getUpsertKeys();
+		const updateKeys = new Set();
+
+		const wheres = [];
+		values.forEach(value => {
+			const where = {};
+			for (const key of upsertKeys) {
+				where[key] = value[key];
+			}
+			wheres.push(where);
+
+			for (const key of Object.keys(value)) {
+				updateKeys.add(key);
+			}
+		});
+		upsertKeys.forEach(upsertKey => {
+			updateKeys.delete(upsertKey);
+		});
+
+		const created = await ModelClass.bulkCreate(values, {
+			...upsertOptions,
+			updateOnDuplicate: [ ...updateKeys ]
+		});
+
+		const output = await ModelClass.findAll({
+			where: {
+				[ Op.or ]: wheres
+			}
+		});
+
+		if (needToCreateTransaction)
+			await transaction.commit();
+
+		const outputMap = new Map();
+
+		const getUpsertKeyTuple = model => upsertKeys.map(key => JSON.stringify(String(model[key]))).join(',');
+		output.forEach(model => {
+			const upsertKey = getUpsertKeyTuple(model);
+			outputMap.set(upsertKey, model);
+		});
+
+		return created.map(model => {
+			const upsertKey = getUpsertKeyTuple(model);
+			return outputMap.get(upsertKey);
+		});
+	}
+
+	return Promise.all(values.map(value => upsertAndReturn(rescrap, ModelClass, value, option)));
 }

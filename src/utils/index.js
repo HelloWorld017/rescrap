@@ -137,6 +137,11 @@ export async function getLatestUserAgent () {
 	return null;
 }
 
+export function chunkArray(array, size) {
+	return [...Array(Math.ceil(array.length / size))]
+		.map((_, index) => array.slice(index * size, (index + 1) * size));
+}
+
 export * from "./axios";
 export * from "./db";
 export * from "./filesystem";
