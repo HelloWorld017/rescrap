@@ -126,6 +126,17 @@ class Rescrap {
 					`${dataItem}`;
 
 				const promise = (async () => {
+					// Skip by IdentifierTag
+					if (parser.implemented.includes('needsUpdate')) {
+						const needsUpdate = await parser.needsUpdate();
+						if (!needsUpdate) {
+							logger.verbose.with('i18n')(
+								'rescrap-skip-units',
+								{ parserName, item: itemName }
+							);
+						}
+					}
+					
 					// Fetch units
 					const unitIterator = await parser.fetchUnits(dataItem);
 
