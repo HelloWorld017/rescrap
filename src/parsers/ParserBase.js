@@ -47,19 +47,22 @@ export default class ParserBase extends named() {
 		let retryCount = 0;
 		let isRetry = false;
 		let previousFetch = null;
+		let ignoreError = false;
 
 		const files = [];
 		while (true) {
-			const { value: yieldObject } = await iterator.next({ isRetry, previousFetch });
-			if (yieldObject === undefined) {
-				break;
-			}
-
-			const { req, file, ignoreError } = yieldObject;
-			const fileModel = this.rescrap.models.ModelFile.build(file);
-			fileModel.terminalId = terminal.id;
-
 			try {
+				const { value: yieldObject } = await iterator.next({ isRetry, previousFetch });
+				if (yieldObject === undefined) {
+					break;
+				}
+
+				const { req, file } = yieldObject;
+				ignoreError = yieldObject.ignoreError;
+				
+				const fileModel = this.rescrap.models.ModelFile.build(file);
+				fileModel.terminalId = terminal.id;
+
 				previousFetch = await fetcher.download(req, fileModel);
 				await this.postProcess(unit, fileModel, context);
 				await fileModel.save();
