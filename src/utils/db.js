@@ -71,6 +71,7 @@ export async function bulkUpsertAndReturn(rescrap, ModelClass, values, option = 
 		});
 
 		const output = await ModelClass.findAll({
+			...upsertOptions,
 			where: {
 				[ Op.or ]: wheres
 			}
