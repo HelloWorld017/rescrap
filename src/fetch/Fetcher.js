@@ -1,11 +1,14 @@
 import axios from "axios";
-import axiosRetry, { isRetryableError } from "axios-retry";
+import axiosCookieJarSupport from "axios-cookiejar-support";
+import axiosRetry from "axios-retry";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import { pipeline } from "stream/promises";
 import sanitizeFilename from "sanitize-filename";
 import util from "util";
+
+import { isRetryableError } from "axios-retry";
+import { pipeline } from "stream/promises";
 
 import {
 	copyAxiosInterceptors,
@@ -17,6 +20,7 @@ import {
 } from "../utils";
 
 const fetcherAxios = axios.create();
+axiosCookieJarSupport(fetcherAxios);
 axiosRetry(fetcherAxios);
 
 export default class Fetcher {
@@ -43,7 +47,6 @@ export default class Fetcher {
 				},
 
 				timeout: this.options.timeout,
-
 				retries: this.options.maxRetry,
 				shouldResetTimeout: true,
 				retryCondition: error => isRetryableError(error) || error.code === 'ECONNABORTED',
