@@ -47,7 +47,8 @@ export default class Fetcher {
 				retries: this.options.maxRetry,
 				shouldResetTimeout: true,
 				retryCondition: error => isRetryableError(error) || error.code === 'ECONNABORTED',
-				retryDelay: count => count * this.options.request.retryDelay
+				retryDelay: count => count * this.options.request.retryDelay,
+				validateStatus: () => status < 500
 			}
 		));
 		this.axios.interceptors = copyAxiosInterceptors(globalAxios);
