@@ -185,16 +185,24 @@ export default class Fetcher {
 				fs.createWriteStream(path.join(this.downloadPath, file.dest))
 			));
 
+			let onFinish = () => {};
+			
 			if (this.options.timeout)
-				promises.push(new Promise((_, reject) => {
-					setTimeout(() => {
+				promises.push(new Promise((resolve, reject) => {
+					const timeout = setTimeout(() => {
 						reject(
 							new Error(`Request timeout while downloading ${this.unit.name} > ${file.id}`)
 						);
-					}, this.options.timeout * 1000);
+					}, this.options.timeout);
+
+					onFinish = () => {
+						clearTimeout(timeout);
+						resolve();
+					};
 				}));
 
 			await Promise.race(promises);
+			onFinish();
 		} catch (err) {
 			if (destStream) {
 				try {
