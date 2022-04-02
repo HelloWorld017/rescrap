@@ -1,6 +1,8 @@
-import imageType from "image-type";
-import readChunk from "read-chunk";
-import Mixin from "./Mixin";
+import fs from 'fs';
+import imageType from 'image-type';
+import path from 'path';
+import readChunk from 'read-chunk';
+import Mixin from './Mixin';
 
 export default class MixinCheckImage extends Mixin {
 	create(BaseClass) {
