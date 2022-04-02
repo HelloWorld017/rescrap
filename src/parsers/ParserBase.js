@@ -51,8 +51,9 @@ export default class ParserBase extends named() {
 
 		const files = [];
 		while (true) {
+			const { value: yieldObject } = await iterator.next({ isRetry, previousFetch });
+
 			try {
-				const { value: yieldObject } = await iterator.next({ isRetry, previousFetch });
 				if (yieldObject === undefined) {
 					break;
 				}
