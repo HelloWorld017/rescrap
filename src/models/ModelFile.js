@@ -3,7 +3,12 @@ import sanitizeFilename from "sanitize-filename";
 import { DataTypes, Model } from "sequelize";
 import ModelTerminal from "./ModelTerminal";
 
-export default class ModelFile extends Model {}
+export default class ModelFile extends Model {
+	static getUpsertKeys() {
+		return [ 'dest', 'terminalId' ];
+	}
+}
+
 export function init (sequelize) {
 	ModelFile.init({
 		id: {

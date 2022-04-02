@@ -1,5 +1,18 @@
 import { Op } from "sequelize";
 
+export async function saveOrUpdate(rescrap, ModelClass, instance, option = {}) {
+	try {
+		await instance.save();
+		return instance;
+	} catch (err) {
+		if (err.name !== 'SequelizeUniqueConstraintError') {
+			throw err;
+		}
+	}
+
+	return upsertAndReturn(rescrap, ModelClass, instance.dataValues, option);
+}
+
 export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 	if (ModelClass.getUpsertKeys) {
 		// FIXME as sequelize sqlite does not work well with the returning upsert
@@ -9,15 +22,12 @@ export async function upsertAndReturn(rescrap, ModelClass, value, option = {}) {
 			option.transaction;
 
 		const where = {};
-		const upsertOptions = {...option, transaction};
-
 		for (const key of ModelClass.getUpsertKeys()) {
 			where[key] = value[key];
 		}
 
-		const foundModel = await ModelClass.findOne({
-			where
-		}, upsertOptions);
+		const upsertOptions = { ...option, transaction, where };
+		const foundModel = await ModelClass.findOne(upsertOptions);
 
 		if (!foundModel) {
 			const createdModel = await ModelClass.create(value, upsertOptions);

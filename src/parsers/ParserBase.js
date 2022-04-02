@@ -1,4 +1,4 @@
-import { named } from "../utils";
+import { named, saveOrUpdate } from "../utils";
 
 export default class ParserBase extends named() {
 	constructor(rescrap, root, fetcher, logger) {
@@ -65,8 +65,8 @@ export default class ParserBase extends named() {
 
 				previousFetch = await fetcher.download(req, fileModel);
 				await this.postProcess(unit, fileModel, context);
-				await fileModel.save();
-				files.push(fileModel);
+				const upsertedModel = await saveOrUpdate(this.rescrap, this.rescrap.models.ModelFile, fileModel);
+				files.push(upsertedModel);
 
 				retryCount = 0;
 				isRetry = false;
