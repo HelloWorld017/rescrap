@@ -70,10 +70,10 @@ export default class Fetcher {
 		const mergedConfig = mergeAxios(...reqs);
 
 		try {
-			const response = await this.axios(mergedConfig);
+			const response = await this.axios.request(mergedConfig);
 			if(this.rescrap.config.debug.dumpRequest) {
 				await fs.promises.mkdir('./dumps', { recursive: true });
-				await fs.promises.writeFile(`./dumps/${Date.now()}.txt`, util.inspect(resp));
+				await fs.promises.writeFile(`./dumps/${Date.now()}.txt`, util.inspect(response));
 			}
 
 			return response;
