@@ -4,21 +4,18 @@ import HttpProxyAgent from 'http-proxy-agent';
 import HttpsProxyAgent from 'https-proxy-agent';
 import { HttpCookieAgent, HttpsCookieAgent } from 'http-cookie-agent'
 
-export function copyAxiosInterceptors(axios) {
-	const newInterceptors = {};
-
-	Object.keys(axios.interceptors)
+export function copyAxiosInterceptors(fromAxios, toAxios) {
+	Object.keys(fromAxios.interceptors)
 		.forEach(interceptorKey => {
-			const interceptorManager = axios.interceptors[interceptorKey];
-			const InterceptorManager = interceptorManager.constructor;
+			const interceptorManager = fromAxios.interceptors[interceptorKey];
+			const newInterceptorManager = toAxios.interceptors[interceptorKey];
 
-			const newInterceptorManager = new InterceptorManager();
-			newInterceptorManager.handlers = [...interceptorManager.handlers];
-
-			newInterceptors[interceptorKey] = newInterceptorManager;
+			interceptorManager.handlers.forEach(({ fulfilled, rejected, ...options }) => {
+				newInterceptorManager.use(fulfilled, rejected, options);
+			});
 		});
 
-	return newInterceptors;
+	return toAxios;
 }
 
 export function mergeAxios(...reqs) {

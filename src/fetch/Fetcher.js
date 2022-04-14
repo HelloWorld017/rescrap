@@ -56,7 +56,7 @@ export default class Fetcher {
 				validateStatus: status => status < 500
 			}
 		));
-		this.axios.interceptors = copyAxiosInterceptors(globalAxios);
+		this.axios = copyAxiosInterceptors(globalAxios, this.axios);
 	}
 
 	async $(url, req) {
