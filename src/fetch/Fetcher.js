@@ -1,5 +1,4 @@
 import axios from "axios";
-import axiosCookieJarSupport from "axios-cookiejar-support";
 import axiosRetry from "axios-retry";
 import crypto from "crypto";
 import fs from "fs";
@@ -11,6 +10,7 @@ import { isRetryableError } from "axios-retry";
 import { pipeline } from "stream/promises";
 
 import {
+	axiosCookieProxy,
 	copyAxiosInterceptors,
 	isPromise,
 	isReadableStream,
@@ -20,7 +20,7 @@ import {
 } from "../utils";
 
 const fetcherAxios = axios.create();
-axiosCookieJarSupport(fetcherAxios);
+axiosCookieProxy(fetcherAxios);
 axiosRetry(fetcherAxios);
 
 export default class Fetcher {
