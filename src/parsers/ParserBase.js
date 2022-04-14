@@ -29,6 +29,9 @@ export default class ParserBase extends named() {
 	// Should yield { file: ModelFile, req: AxiosConfiguration | Promise | ReadableStream, ignoreError: bool }
 	async *_listFileIterator(unit, context) {
 		const files = await this._listFile(unit, context);
+		if (!files.length) {
+			context.logger.warn.with('i18n')('parser-no-files', { name: unit.name, key: unit.key, id: unit.id });
+		}
 
 		for (let i = 0; i < files.length; i++) {
 			const result = yield files[i];

@@ -28,6 +28,7 @@
 "parser-download-retry": "Error while downloading file! Retrying..."
 "parser-load": "Loaded parser: {parserName}"
 "parser-load-failed": "Failed to load parser: {parserPath}"
+"parser-no-files": "Unit {name}(id={id}, key={key}) has no files!"
 
 "plugin-load": "Loaded plugin: {pluginName}"
 "plugin-load-failed": "Failed to load plugin: {pluginPath}"
