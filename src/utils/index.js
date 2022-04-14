@@ -22,11 +22,19 @@ export function named(BaseClass = Object) {
 }
 
 export async function evaluate(filePath, context) {
+	const contextEntries = Object.entries(context);
 	const absPath = path.resolve(filePath);
 	const fileName = path.basename(filePath);
 
 	const fileContent = await fs.promises.readFile(absPath, 'utf8');
-	const script = new vm.Script(fileContent, { filename: fileName });
+	const script = vm.compileFunction(fileContent, [
+		'exports',
+		'require',
+		'module',
+		'__filename',
+		'__dirname',
+		...contextEntries.map(([ key ]) => key)
+	], { filename: fileName });
 
 	const scriptModule = new Module(absPath, module);
 	scriptModule.paths = [
@@ -53,15 +61,14 @@ export async function evaluate(filePath, context) {
 	scriptRequire.extensions = Module._extensions;
 	scriptRequire.cache = Module._cache;
 
-	script.runInNewContext({
-		console,
-		require: scriptRequire,
-		module: scriptModule,
-		exports: scriptModule.exports,
-		__filename: scriptModule.filename,
-		__dirname: scriptModule.path,
-		...context
-	});
+	script(
+		scriptModule.exports,
+		scriptRequire,
+		scriptModule,
+		scriptModule.filename,
+		scriptModule.path,
+		...contextEntries.map(([, value ]) => value)
+	);
 
 	scriptModule.loaded = true;
 	return scriptModule.exports;
