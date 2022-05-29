@@ -80,5 +80,5 @@ export function init (sequelize) {
 		}
 	);
 
-	ModelUnit.hasOne(ModelUnit, { as: 'Parent', foreignKey: 'parentId' });
+	ModelUnit.belongsTo(ModelUnit, { as: 'Parent', foreignKey: 'parentId' });
 }
