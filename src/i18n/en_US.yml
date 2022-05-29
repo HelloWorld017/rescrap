@@ -38,8 +38,10 @@
 "rescrap-fetch-units": "Fetched {updates} updates from {parserName} / {item}"
 "rescrap-fetch-finish": "Fetched {updates} updates from {parserName}"
 "rescrap-fetch-error": "Failed to fetch {parserName} / {item}"
+"rescrap-fetch-error-detailed": "Detailed Log for {parserName} / {item}: "
 "rescrap-download-progress": "Downloaded {parserName} / {unit}"
 "rescrap-download-error": "Error while downloading {parserName} / {unit}"
+"rescrap-download-error-detailed": "Detailed Log for {parserName} / {unit}: "
 "rescrap-unit-has-unsupported-key": "Given unit key {unitKey} is not a string! This is unsupported and will make an error."
 "rescrap-unit-upsert-error": "Failed to upsert some units!"
 

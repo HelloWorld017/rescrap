@@ -245,6 +245,12 @@ class Rescrap {
 					logger.error.with('i18n')(
 						'rescrap-fetch-error',
 						{ parserName, item: itemName },
+						err.message
+					);
+
+					logger.verboseWarn.with('i18n')(
+						'rescrap-fetch-error-detailed',
+						{ parserName, item: itemName },
 						err
 					);
 
@@ -297,6 +303,12 @@ class Rescrap {
 				})().catch(err => {
 					logger.error.with('i18n')(
 						'rescrap-download-error',
+						{ parserName, unit: unit.name },
+						err.message
+					);
+
+					logger.verboseWarn.with('i18n')(
+						'rescrap-download-error-detailed',
 						{ parserName, unit: unit.name },
 						err
 					);
