@@ -11,6 +11,7 @@ import { pipeline } from "stream/promises";
 
 import {
 	axiosCookieProxy,
+	cltRandom,
 	copyAxiosInterceptors,
 	isPromise,
 	isReadableStream,
@@ -165,7 +166,7 @@ export default class Fetcher {
 	}
 
 	async _downloadRequest(req, file, retry = 0) {
-		await sleep(this.options.download.delay);
+		await sleep(this.options.download.delay + cltRandom() * this.options.download.delayRandom);
 
 		const request = {
 			...req,

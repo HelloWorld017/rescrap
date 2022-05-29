@@ -149,6 +149,15 @@ export function chunkArray(array, size) {
 		.map((_, index) => array.slice(index * size, (index + 1) * size));
 }
 
+export function cltRandom(samples = 3) {
+	let value = 0;
+	for (let i = 0; i < samples; i++) {
+		value += Math.random();
+	}
+
+	return value / samples;
+}
+
 export * from "./axios";
 export * from "./db";
 export * from "./filesystem";

@@ -19,7 +19,8 @@ export const DefaultConfig = {
 		},
 
 		download: {
-			delay: 1000,
+			delay: 750,
+			delayRandom: 500,
 			path: './rescrap/downloads'
 		}
 	},
@@ -36,7 +37,13 @@ export const DefaultConfig = {
 		}
 	},
 	rescrap: {
-		database: 'sqlite:./rescrap/rescrap.db'
+		database: 'sqlite:./rescrap/rescrap.db',
+		fileDelay: 0,
+		fileDelayRandom: 0,
+		unitDelay: 750,
+		unitDelayRandom: 500,
+		parallelUnits: 1,
+		parallelParsers: 2,
 	},
 	debug: {
 		debugMode: false,

@@ -1,4 +1,4 @@
-import { named, saveOrUpdate } from "../utils";
+import { cltRandom, named, saveOrUpdate, sleep } from "../utils";
 
 export default class ParserBase extends named() {
 	constructor(rescrap, root, fetcher, logger) {
@@ -74,6 +74,10 @@ export default class ParserBase extends named() {
 
 				retryCount = 0;
 				isRetry = false;
+				await sleep(
+					(this.options.fileDelay ?? this.rescrap.config.rescrap.fileDelay) +
+					cltRandom() * (this.options.fileDelayRandom ?? this.rescrap.config.rescrap.fileDelayRandom)
+				);
 			} catch(err) {
 				previousFetch = err;
 				previousFetch.error = err;

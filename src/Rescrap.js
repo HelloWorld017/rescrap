@@ -144,6 +144,10 @@ class Rescrap {
 
 					// Fetch units
 					const unitIterator = await parser.fetchUnits(dataItem);
+					await utils.sleep(
+						(parser.options.unitDelay ?? rescrap.config.rescrap.unitDelay) +
+						utils.cltRandom() * (parser.options.unitDelayRandom ?? rescrap.config.rescrap.unitDelayRandom)
+					);
 
 					// Make unit models
 					let units;
@@ -275,10 +279,15 @@ class Rescrap {
 		const concurrency = parser.options.parallelUnits || this.config.rescrap.parallelUnits;
 		logger = logger.scope(parserName);
 
+		const rescrap = this;
 		const promiseGenerator = function* () {
 			for (const unit of updatedUnits) {
 				yield (async () => {
 					await parser.download(unit);
+					await utils.sleep(
+						(parser.options.unitDelay ?? rescrap.config.rescrap.unitDelay) +
+						utils.cltRandom() * (parser.options.unitDelayRandom ?? rescrap.config.rescrap.unitDelayRandom)
+					);
 					downloaded.push(unit);
 
 					logger.progress.with('i18n')(
