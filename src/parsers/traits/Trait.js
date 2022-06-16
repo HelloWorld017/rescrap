@@ -18,7 +18,7 @@ export default class Trait extends named(Mixin) {
 			const implMethod = `_${method}`;
 
 			TraitClass.prototype[ method ] = function (...args) {
-				return PluginManager
+				return this.rescrap.pluginManager
 					.execute(this, `parser/${method}`, args, this[implMethod].bind(this));
 			};
 
