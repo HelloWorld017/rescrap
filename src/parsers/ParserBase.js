@@ -9,7 +9,7 @@ export default class ParserBase extends named() {
 		this.fetcher = fetcher;
 		this.logger = logger;
 		this.initialized = false;
-		this.implemented = [];
+		this.implemented = new Set();
 		this.options = {};
 	}
 

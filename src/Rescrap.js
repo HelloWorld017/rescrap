@@ -132,7 +132,7 @@ class Rescrap {
 				let transaction;
 				const promise = (async () => {
 					// Skip by IdentifierTag
-					if (parser.implemented.includes('needsUpdate')) {
+					if (parser.implemented.has('needsUpdate')) {
 						const needsUpdate = await parser.needsUpdate();
 						if (!needsUpdate) {
 							logger.verbose.with('i18n')(

@@ -10,7 +10,7 @@ export default class Trait extends named(Mixin) {
 		const TraitClass = class extends BaseClass {
 			constructor(...args) {
 				super(...args);
-				this.implemented.push(name);
+				this.implemented.add(name);
 			}
 		};
 
