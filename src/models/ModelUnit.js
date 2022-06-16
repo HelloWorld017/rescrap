@@ -3,8 +3,8 @@ import { sanitizeFilename } from "../utils";
 import { DataTypes, Model, QueryTypes } from "sequelize";
 
 export default class ModelUnit extends Model {
-	getChildren() {
-
+	async getChildren() {
+		return this.constructor.findAll({ where: { parentId: this.id } });
 	}
 
 	async getAncestors({
