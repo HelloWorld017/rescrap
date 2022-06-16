@@ -1,8 +1,7 @@
 import mergeConfig from "axios/lib/core/mergeConfig";
-import { createCookieAgent } from 'http-cookie-agent';
-import HttpProxyAgent from 'http-proxy-agent';
-import HttpsProxyAgent from 'https-proxy-agent';
-import { HttpCookieAgent, HttpsCookieAgent } from 'http-cookie-agent'
+import { createCookieAgent } from 'http-cookie-agent/http';
+import { HttpCookieAgent, HttpsCookieAgent } from 'http-cookie-agent/http'
+import { SocksProxyAgent } from 'socks-proxy-agent';
 
 export function copyAxiosInterceptors(fromAxios, toAxios) {
 	Object.keys(fromAxios.interceptors)
@@ -26,24 +25,25 @@ export function mergeAxios(...reqs) {
 }
 
 export function axiosCookieProxy(axios) {
-	const HttpCookieProxyAgent = createCookieAgent(HttpProxyAgent);
-	const HttpsCookieProxyAgent = createCookieAgent(HttpsProxyAgent);
+	const CookieProxyAgent = createCookieAgent(SocksProxyAgent);
 
 	const cookieProxyInterceptor = config => {
-		if (!config.jar && !config.proxy)
+		if (!config.jar && !config.socksProxy)
 			return config;
 
 		const agent = { httpAgent: null, httpsAgent: null };
-		
+
 		if (!config.jar) {
-			agent.httpAgent = new HttpProxyAgent(config.proxy);
-			agent.httpsAgent = new HttpsProxyAgent(config.proxy);
+			const proxyAgent = new SocksProxyAgent(config.socksProxy);
+			agent.httpAgent = proxyAgent;
+			agent.httpsAgent = proxyAgent;
 		} else if (!config.proxy) {
 			agent.httpAgent = new HttpCookieAgent({ jar: config.jar });
 			agent.httpsAgent = new HttpsCookieAgent({ jar: config.jar });
 		} else {
-			agent.httpAgent = new HttpCookieProxyAgent({ jar: config.jar, ...config.proxy });
-			agent.httpsAgent = new HttpsCookieProxyAgent({ jar: config.jar, ...config.proxy });
+			const cookieProxyAgent = new CookieProxyAgent({ jar: config.jar, ...config.socksProxy });
+			agent.httpAgent = cookieProxyAgent;
+			agent.httpsAgent = cookieProxyAgent;
 		}
 
 		return {

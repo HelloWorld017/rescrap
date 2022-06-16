@@ -51,6 +51,7 @@ export default class Fetcher {
 
 				timeout: this.options.timeout,
 				retries: this.options.maxRetry,
+				socksProxy: this.options.proxy,
 				shouldResetTimeout: true,
 				retryCondition: error => isRetryableError(error) || error.code === 'ECONNABORTED',
 				retryDelay: count => count * this.options.request.retryDelay,
