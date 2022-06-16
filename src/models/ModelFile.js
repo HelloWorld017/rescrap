@@ -1,4 +1,4 @@
-import sanitizeFilename from "sanitize-filename";
+import { sanitizeFilename } from "../utils";
 
 import { DataTypes, Model } from "sequelize";
 import ModelTerminal from "./ModelTerminal";

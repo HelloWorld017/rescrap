@@ -3,7 +3,6 @@ import axiosRetry from "axios-retry";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
-import sanitizeFilename from "sanitize-filename";
 import util from "util";
 
 import { isRetryableError } from "axios-retry";
@@ -17,6 +16,7 @@ import {
 	isReadableStream,
 	merge,
 	mergeAxios,
+	sanitizeFilename,
 	sleep
 } from "../utils";
 
