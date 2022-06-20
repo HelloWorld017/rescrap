@@ -20,6 +20,13 @@
 "command-debug-fetch-unit-created": "fetchUnit() yielded an unit"
 "command-debug-fetch-unit-finished": "fetchUnit() returned {unitCount} units"
 "command-debug-fetch-unit-run-end": "Successfully finished fetchUnit()"
+"command-download-description": "Do a single download job for given parser"
+"command-download-update-start": "Finding updates"
+"command-download-update-end": "Finding updates"
+"command-download-update-finish": "Found {finished} updates, with {errors} errors"
+"command-download-download-start": "Downloading"
+"command-download-download-end": "Downloading"
+"command-download-download-finish": "Downloaded {finished} updates, with {errors} errors"
 
 "fetcher-download-complete": "Downloaded {unitName} > {fileId}"
 "fetcher-download-failed": "Error downloading {unitName} > {fileId}"
