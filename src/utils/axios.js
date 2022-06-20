@@ -37,11 +37,11 @@ export function axiosCookieProxy(axios) {
 			const proxyAgent = new SocksProxyAgent(config.socksProxy);
 			agent.httpAgent = proxyAgent;
 			agent.httpsAgent = proxyAgent;
-		} else if (!config.proxy) {
-			agent.httpAgent = new HttpCookieAgent({ jar: config.jar });
-			agent.httpsAgent = new HttpsCookieAgent({ jar: config.jar });
+		} else if (!config.socksProxy) {
+			agent.httpAgent = new HttpCookieAgent({ cookies: { jar: config.jar } });
+			agent.httpsAgent = new HttpsCookieAgent({ cookies: { jar: config.jar } });
 		} else {
-			const cookieProxyAgent = new CookieProxyAgent({ jar: config.jar, ...config.socksProxy });
+			const cookieProxyAgent = new CookieProxyAgent({ cookies: { jar: config.jar }, ...config.socksProxy });
 			agent.httpAgent = cookieProxyAgent;
 			agent.httpsAgent = cookieProxyAgent;
 		}
