@@ -27,13 +27,13 @@ export default class ParserBase extends named() {
 	}
 
 	// Should yield { file: ModelFile, req: AxiosConfiguration | Promise | ReadableStream, ignoreError: bool }
-	async *_listFileIterator(unit, context) {
+	async *_listFileIterator(unit, { from = 0 }, context) {
 		const files = await this._listFile(unit, context);
 		if (!files.length) {
 			context.logger.warn.with('i18n')('parser-no-files', { name: unit.name, key: unit.key, id: unit.id });
 		}
 
-		for (let i = 0; i < files.length; i++) {
+		for (let i = from; i < files.length; i++) {
 			const result = yield files[i];
 
 			if (result.isRetry) {
@@ -44,7 +44,16 @@ export default class ParserBase extends named() {
 
 	async _download(unit, context) {
 		const { fetcher } = context;
-		const iterator = await this.listFileIterator(unit, context);
+		const resumeFile = await this.rescrap.models.ModelFile.findOne({
+			where: { terminalId: terminal.id },
+			order: [ ['order', 'DESC'] ]
+		});
+
+		const options = {
+			from: resumeFile?.order ?? 0
+		};
+
+		const iterator = await this.listFileIterator(unit, options, context);
 		const terminal = await unit.getTerminal();
 
 		let retryCount = 0;
@@ -63,7 +72,7 @@ export default class ParserBase extends named() {
 
 				const { req, file } = yieldObject;
 				ignoreError = yieldObject.ignoreError;
-				
+
 				const fileModel = this.rescrap.models.ModelFile.build(file);
 				fileModel.terminalId = terminal.id;
 
@@ -173,11 +182,11 @@ export default class ParserBase extends named() {
 		);
 	}
 
-	async listFileIterator(unit, context) {
+	async listFileIterator(unit, options, context) {
 		return this.rescrap.pluginManager.execute(
 			this,
 			'parser/listFileIterator',
-			[ unit, context ?? await this.getContext(unit) ],
+			[ unit, options, context ?? await this.getContext(unit) ],
 			this._listFileIterator.bind(this)
 		);
 	}
